@@ -3040,7 +3040,7 @@ function DeploymentSection({
         <CardDescription>Customize the widget and choose your deployment option.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs defaultValue="appearance" className="w-full">
+        {/* <Tabs defaultValue="appearance" className="w-full">
           <TabsList className="w-full justify-start gap-2 overflow-auto">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="behavior">Behavior</TabsTrigger>
@@ -3311,7 +3311,7 @@ function DeploymentSection({
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </Tabs> */}
 
         <DeploymentOptions
           deploymentTab={deploymentTab}
@@ -3580,15 +3580,6 @@ function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSnippets,
         <CardDescription>Embed via npm package or call the API directly.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-lg border p-4">
-          <h4 className="text-sm font-semibold">Install via npm</h4>
-          <div className="mt-2 flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm font-mono">
-            <code>npx add krira@chatbot</code>
-            <Button variant="ghost" size="sm">
-              Copy
-            </Button>
-          </div>
-        </div>
         <Tabs value={deploymentTab} onValueChange={onDeploymentTabChange}>
           <TabsList>
             <TabsTrigger value="javascript">JavaScript</TabsTrigger>
