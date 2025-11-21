@@ -640,8 +640,8 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-// ==================== GOOGLE SIGNUP ====================
-export const signupWithGoogle = async (req, res) => {
+// ==================== GOOGLE AUTH (LOGIN & SIGNUP) ====================
+export const googleAuth = async (req, res) => {
   try {
     const { idToken } = req.body;
 
@@ -654,100 +654,61 @@ export const signupWithGoogle = async (req, res) => {
 
     // Verify Google token
     const googleUser = await googleAuthService.verifyIdToken(idToken);
+    
+    // Normalize email
+    const normalizedEmail = googleUser.email.toLowerCase().trim();
+    
+    console.log(`Google Auth processing for email: ${normalizedEmail}`);
 
-    // Check if user already exists
-    let user = await User.findOne({ email: googleUser.email });
+    // Find existing user
+    let user = await User.findOne({ email: normalizedEmail });
 
-    if (user) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists. Please login instead.',
-      });
-    }
-
-    // Create new user
-    user = await User.create({
-      name: googleUser.name,
-      email: googleUser.email,
-      googleId: googleUser.googleId,
-      isVerified: true, // Google accounts are pre-verified
-      authProvider: 'google',
-      role: 'user',
-    });
-
-    // Generate tokens
-    const { accessToken, refreshToken } = tokenService.generateTokens(
-      user._id.toString(),
-      user.role
-    );
-
-    // Save refresh token
-    user.refreshToken = refreshToken;
-    user.lastLogin = Date.now();
-    await user.save();
-
-    // Set cookies
-    tokenService.setTokenCookies(res, accessToken, refreshToken);
-
-    // Send welcome email (non-blocking)
-    emailService.sendWelcomeEmail(user.email, user.name).catch(console.error);
-
-    // Cache user data
-    await redisClient.cacheUser(user._id.toString(), user);
-
-    res.status(201).json({
-      success: true,
-      message: 'Signup with Google successful.',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        plan: user.plan,
-        isVerified: user.isVerified,
-      },
-      accessToken,
-    });
-  } catch (error) {
-    console.error('Google signup error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error signing up with Google. Please try again.',
-      error: error.message,
-    });
-  }
-};
-
-// ==================== GOOGLE LOGIN ====================
-export const loginWithGoogle = async (req, res) => {
-  try {
-    const { idToken } = req.body;
-
-    if (!idToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Google ID token is required.',
-      });
-    }
-
-    // Verify Google token
-    const googleUser = await googleAuthService.verifyIdToken(idToken);
-
-    // Find user
-    let user = await User.findOne({ email: googleUser.email });
-
+    // Handle User Creation (if not found)
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account found. Please sign up first.',
-      });
+      console.log(`User not found. Creating new user for: ${normalizedEmail}`);
+      try {
+        user = await User.create({
+          name: googleUser.name,
+          email: normalizedEmail,
+          googleId: googleUser.googleId,
+          isVerified: true,
+          authProvider: 'google',
+          role: 'user',
+        });
+        
+        // Send welcome email
+        emailService.sendWelcomeEmail(user.email, user.name).catch(console.error);
+      } catch (createError) {
+        // Handle race condition: User might have been created by a parallel request
+        if (createError.code === 11000) {
+          console.log(`User creation race condition caught for: ${normalizedEmail}`);
+          user = await User.findOne({ email: normalizedEmail });
+          if (!user) {
+             throw createError; // Should not happen if 11000 was thrown
+          }
+        } else {
+          throw createError;
+        }
+      }
     }
 
-    // If user exists but didn't sign up with Google, link the account
+    // Ensure Google Account Linking
+    let hasChanges = false;
+
     if (!user.googleId) {
+      console.log(`Linking Google ID for user: ${normalizedEmail}`);
       user.googleId = googleUser.googleId;
       user.authProvider = 'google';
+      hasChanges = true;
+    }
+
+    if (!user.isVerified) {
+      console.log(`Verifying user via Google: ${normalizedEmail}`);
       user.isVerified = true;
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
       await user.save();
     }
 
@@ -770,7 +731,7 @@ export const loginWithGoogle = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Login with Google successful.',
+      message: 'Authenticated successfully with Google.',
       user: {
         id: user._id,
         name: user.name,
@@ -782,14 +743,18 @@ export const loginWithGoogle = async (req, res) => {
       accessToken,
     });
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error('Google auth error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error logging in with Google. Please try again.',
+      message: 'Error during Google authentication.',
       error: error.message,
     });
   }
 };
+
+// Export aliases for backward compatibility and clarity
+export const loginWithGoogle = googleAuth;
+export const signupWithGoogle = googleAuth;
 
 // ==================== PROFILE ====================
 export const profile = async (req, res) => {
