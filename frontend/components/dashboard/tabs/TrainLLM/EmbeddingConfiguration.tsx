@@ -17,6 +17,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { EmbeddingModelId, VectorStoreOption, EmbeddingRunSummary } from "./types"
 import { EMBEDDING_MODELS } from "./constants"
@@ -24,6 +25,8 @@ import { EMBEDDING_MODELS } from "./constants"
 type EmbeddingConfigurationProps = {
   selectedModel: EmbeddingModelId
   onSelectModel: (id: EmbeddingModelId) => void
+  selectedDimension: number
+  onSelectDimension: (dimension: number) => void
   vectorStore: VectorStoreOption
   onVectorStoreChange: (value: VectorStoreOption) => void
   pineconeKey: string
@@ -43,6 +46,8 @@ export function EmbeddingConfiguration({
   onSelectModel,
   vectorStore,
   onVectorStoreChange,
+  selectedDimension,
+  onSelectDimension,
   pineconeKey,
   setPineconeKey,
   indexName,
@@ -104,7 +109,12 @@ export function EmbeddingConfiguration({
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span>Dimensions: {model.dimensions}</span>
+                <span>
+                  Dimensions:
+                  {Array.isArray(model.dimensionOptions)
+                    ? ` ${model.dimensionOptions.join(" / ")}`
+                    : " Unknown"}
+                </span>
                 
               </div>
             </Label>
@@ -118,6 +128,27 @@ export function EmbeddingConfiguration({
             <p className="text-muted-foreground">{currentModel.notes}</p>
           </AlertDescription>
         </Alert>
+
+        {Array.isArray(currentModel.dimensionOptions) && currentModel.dimensionOptions.length > 1 && (
+          <div className="space-y-2">
+            <Label>Embedding dimension</Label>
+            <Select
+              value={String(selectedDimension)}
+              onValueChange={(value) => onSelectDimension(Number(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select dimension" />
+              </SelectTrigger>
+              <SelectContent>
+                {currentModel.dimensionOptions.map((dimension) => (
+                  <SelectItem key={dimension} value={String(dimension)}>
+                    {dimension} dimensions
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         
 

@@ -7,7 +7,13 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, model_validator
 
 
-EmbeddingModel = Literal["openai-small", "openai-large", "huggingface"]
+EmbeddingModel = Literal[
+    "openai-small",
+    "openai-large",
+    "text-embedding-3-small",
+    "text-embedding-3-large",
+    "huggingface",
+]
 VectorStore = Literal["pinecone", "chroma"]
 
 
@@ -41,6 +47,11 @@ class EmbeddingRequest(BaseModel):
     """Request body for embedding datasets."""
 
     embedding_model: EmbeddingModel = Field(..., description="Embedding model identifier")
+    dimension: Optional[int] = Field(
+        None,
+        ge=1,
+        description="Optional embedding dimension override when supported by the model",
+    )
     vector_store: VectorStore = Field(..., description="Vector database target")
     datasets: List[DatasetEmbeddingPayload] = Field(..., min_length=1, description="Datasets queued for embedding")
     pinecone: Optional[PineconeConfig] = Field(None, description="Pinecone credentials when applicable")

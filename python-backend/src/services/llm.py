@@ -494,6 +494,7 @@ class LLMService:
             or os.getenv("FASTROUTER_OPENAI_MODEL")
             or "openai/gpt-5"
         )
+        self._evaluation_roots = self._build_evaluation_roots()
 
     # ------------------------------------------------------------------
     # Model listing
@@ -631,6 +632,52 @@ class LLMService:
 
         return self._fastrouter_client
 
+    def _build_evaluation_roots(self) -> List[Path]:
+        roots: List[Path] = []
+
+        def _append(candidate: Path | str | None) -> None:
+            if not candidate:
+                return
+            try:
+                resolved = Path(candidate).expanduser().resolve()
+            except Exception:  # pragma: no cover - defensive path resolution
+                return
+            if resolved not in roots:
+                roots.append(resolved)
+
+        _append(TEST_DIRECTORY)
+
+        project_root = PROJECT_ROOT.resolve()
+        repo_root = project_root.parent
+
+        # Project-local test directories
+        _append(project_root / "test")
+        _append(project_root / "backend" / "test")
+
+        # Parent-level fallbacks in case Node/Express runs from parent dir
+        _append(repo_root / "test")
+        _append(repo_root / "backend" / "test")
+
+        env_override = os.getenv("EVALUATION_DIRECTORY") or os.getenv("EVALUATION_DIR")
+        _append(env_override)
+
+        if self._settings.environment.lower() == "production":
+            _append(Path("/tmp/test"))
+        else:
+            tmp_dir = os.getenv("TMPDIR")
+            if tmp_dir:
+                _append(Path(tmp_dir) / "test")
+
+        return roots or [TEST_DIRECTORY.resolve()]
+
+    @staticmethod
+    def _is_within_directory(path: Path, parent: Path) -> bool:
+        try:
+            path.relative_to(parent)
+            return True
+        except ValueError:
+            return False
+
     def _resolve_csv_path(self, csv_path: str) -> Path:
         candidate = Path(csv_path)
         if not candidate.is_absolute():
@@ -638,9 +685,12 @@ class LLMService:
         else:
             candidate = candidate.resolve()
 
-        test_root = TEST_DIRECTORY.resolve()
-        if test_root not in candidate.parents:
-            raise LLMServiceError("Evaluation CSV must reside within the project 'test' directory")
+        allowed_roots = self._evaluation_roots or [TEST_DIRECTORY.resolve()]
+        if not any(self._is_within_directory(candidate, root) for root in allowed_roots):
+            allowed_paths = ", ".join(str(root) for root in allowed_roots)
+            raise LLMServiceError(
+                "Evaluation CSV must reside within one of the allowed directories: " + allowed_paths
+            )
 
         if not candidate.exists() or not candidate.is_file():
             raise LLMServiceError(f"Evaluation CSV file '{candidate}' was not found")
@@ -763,6 +813,7 @@ class LLMService:
         dataset_ids: List[str],
         top_k: int,
         test_question: str,
+        embedding_dimension: Optional[int] = None,
         pinecone: Optional[PineconeConfig] = None,
     ) -> Dict[str, Any]:
         """Test LLM configuration with a sample question."""
@@ -785,7 +836,9 @@ class LLMService:
             
             # Get embeddings for the test question
             question_vectors = await self._embedding_service.generate(
-                embedding_model, [test_question]
+                embedding_model,
+                [test_question],
+                dimensions=embedding_dimension,
             )
             question_vector = question_vectors[0] if question_vectors else []
             
@@ -835,6 +888,7 @@ class LLMService:
         vector_store: str,
         dataset_ids: Sequence[str],
         top_k: int,
+        embedding_dimension: Optional[int] = None,
         csv_path: str,
         pinecone: Optional[PineconeConfig],
         original_filename: Optional[str] = None,
@@ -886,7 +940,11 @@ class LLMService:
         )
 
         question_texts = [row.question for row in csv_rows]
-        question_vectors = await self._embedding_service.generate(embedding_literal, question_texts)
+        question_vectors = await self._embedding_service.generate(
+            embedding_literal,
+            question_texts,
+            dimensions=embedding_dimension,
+        )
         vector_map = {index: vector for index, vector in enumerate(question_vectors)}
 
         metric_values: Dict[str, List[Tuple[float, str]]] = {

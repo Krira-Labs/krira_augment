@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import ValidationError
+from typing import Optional
 
 from ...schemas import (
     LLMModelsResponse,
@@ -38,6 +39,14 @@ async def test_llm_configuration(
     """Test LLM configuration with a sample query."""
     
     try:
+        dimension_raw = request.get("embeddingDimension")
+        embedding_dimension: Optional[int] = None
+        if dimension_raw not in (None, ""):
+            try:
+                embedding_dimension = int(dimension_raw)
+            except (TypeError, ValueError) as exc:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="embeddingDimension must be numeric") from exc
+
         # Extract request parameters
         provider = request.get("provider")
         model_id = request.get("modelId")
@@ -65,6 +74,7 @@ async def test_llm_configuration(
             model_id=model_id,
             system_prompt=system_prompt,
             embedding_model=embedding_model,
+            embedding_dimension=embedding_dimension,
             vector_store=vector_store,
             dataset_ids=dataset_ids,
             top_k=top_k,
@@ -99,6 +109,14 @@ async def evaluate_llm_configuration(
         pinecone_payload = request.get("pinecone")
         pinecone_config = PineconeConfig.model_validate(pinecone_payload) if pinecone_payload else None
 
+        dimension_raw = request.get("embeddingDimension")
+        embedding_dimension: Optional[int] = None
+        if dimension_raw not in (None, ""):
+            try:
+                embedding_dimension = int(dimension_raw)
+            except (TypeError, ValueError) as exc:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="embeddingDimension must be numeric") from exc
+
         dataset_ids_raw = request.get("datasetIds") or []
         if not isinstance(dataset_ids_raw, list):
             dataset_ids_raw = [dataset_ids_raw]
@@ -109,6 +127,7 @@ async def evaluate_llm_configuration(
             model_id=request.get("modelId", ""),
             system_prompt=request.get("systemPrompt", ""),
             embedding_model=request.get("embeddingModel", ""),
+            embedding_dimension=embedding_dimension,
             vector_store=request.get("vectorStore", ""),
             dataset_ids=dataset_ids,
             top_k=request.get("topK", 30),

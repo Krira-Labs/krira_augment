@@ -43,6 +43,8 @@ import {
 import {
   STEPS,
   EMBEDDING_MODELS,
+  EMBEDDING_DIMENSION_OPTIONS,
+  DEFAULT_EMBEDDING_DIMENSIONS,
   DEFAULT_FRONTEND_MODELS,
   CODE_SNIPPETS,
   FILE_DATASET_TYPES,
@@ -75,6 +77,9 @@ export function TrainLLMTab() {
   const [previewError, setPreviewError] = React.useState<string | null>(null)
   const [isPreviewLoading, setIsPreviewLoading] = React.useState(false)
   const [selectedModel, setSelectedModel] = React.useState<EmbeddingModelId>(EMBEDDING_MODELS[0].id as EmbeddingModelId)
+  const [modelDimensions, setModelDimensions] = React.useState<Record<EmbeddingModelId, number>>({
+    ...DEFAULT_EMBEDDING_DIMENSIONS,
+  })
   const [pineconeKey, setPineconeKey] = React.useState("")
   const [indexName, setIndexName] = React.useState("krira-pro-index")
   const [connectionStatus, setConnectionStatus] = React.useState<"idle" | "success" | "error">("idle")
@@ -82,6 +87,7 @@ export function TrainLLMTab() {
   const [embeddingProgress, setEmbeddingProgress] = React.useState(0)
   const [vectorStore, setVectorStore] = React.useState<VectorStoreOption>("pinecone")
   const [embeddingSummary, setEmbeddingSummary] = React.useState<EmbeddingRunSummary | null>(null)
+  const currentEmbeddingDimension = modelDimensions[selectedModel] ?? DEFAULT_EMBEDDING_DIMENSIONS[selectedModel]
   const [provider, setProvider] = React.useState<LLMProviderId>("openai")
   const [model, setModel] = React.useState("")
   const [llmModels, setLlmModels] = React.useState<Record<LLMProviderId, LLMModelOption[]>>({
@@ -213,7 +219,18 @@ export function TrainLLMTab() {
         // Pre-fill embedding data
         if (chatbot.embedding) {
           if (chatbot.embedding.model) {
-            setSelectedModel(chatbot.embedding.model as EmbeddingModelId)
+            const embeddingId = chatbot.embedding.model as EmbeddingModelId
+            setSelectedModel(embeddingId)
+            if (typeof chatbot.embedding.dimension === "number") {
+              const allowedDimensions = EMBEDDING_DIMENSION_OPTIONS[embeddingId] ?? []
+              const normalizedDimension = allowedDimensions.includes(chatbot.embedding.dimension)
+                ? chatbot.embedding.dimension
+                : DEFAULT_EMBEDDING_DIMENSIONS[embeddingId]
+              setModelDimensions((prev) => ({
+                ...prev,
+                [embeddingId]: normalizedDimension,
+              }))
+            }
           }
           if (chatbot.embedding.vectorStore) {
             setVectorStore(chatbot.embedding.vectorStore as VectorStoreOption)
@@ -443,6 +460,7 @@ export function TrainLLMTab() {
       formData.append("modelId", model)
       formData.append("systemPrompt", systemPrompt)
       formData.append("embeddingModel", selectedModel)
+      formData.append("embeddingDimension", String(currentEmbeddingDimension))
       formData.append("vectorStore", vectorStore)
       formData.append("datasetIds", JSON.stringify(datasetIds))
       formData.append("topK", String(chunksToRetrieve))
@@ -505,6 +523,7 @@ export function TrainLLMTab() {
   }, [
     chatbotId,
     chunksToRetrieve,
+    currentEmbeddingDimension,
     evaluationCsv,
     indexName,
     model,
@@ -853,6 +872,16 @@ export function TrainLLMTab() {
     [clearPreview]
   )
 
+  const handleSelectDimension = React.useCallback(
+    (dimension: number) => {
+      setModelDimensions((prev) => ({
+        ...prev,
+        [selectedModel]: dimension,
+      }))
+    },
+    [selectedModel]
+  )
+
   const handleAddUrl = React.useCallback(() => {
     setWebsiteUrls((prev) => [...prev, ""])
     clearPreview()
@@ -947,11 +976,13 @@ export function TrainLLMTab() {
 
     const requestPayload: {
       embeddingModel: EmbeddingModelId
+      embeddingDimension: number
       vectorDatabase: VectorStoreOption
       datasets: EmbeddingDatasetPayload[]
       pineconeConfig?: { apiKey: string; indexName: string }
     } = {
       embeddingModel: selectedModel,
+      embeddingDimension: currentEmbeddingDimension,
       vectorDatabase: vectorStore,
       datasets: datasetsPayload,
     }
@@ -993,7 +1024,7 @@ export function TrainLLMTab() {
     } finally {
       setIsEmbedding(false)
     }
-  }, [indexName, isEmbedding, pineconeKey, previewResults, selectedModel, toast, vectorStore])
+  }, [currentEmbeddingDimension, indexName, isEmbedding, pineconeKey, previewResults, selectedModel, toast, vectorStore])
 
   const handleProviderChange = (value: string) => {
     setProvider(value as LLMProviderId)
@@ -1066,6 +1097,7 @@ export function TrainLLMTab() {
       systemPrompt: string
       question: string
       embeddingModel: EmbeddingModelId
+      embeddingDimension: number
       vectorStore: VectorStoreOption
       topK: number
       datasetIds: string[]
@@ -1076,6 +1108,7 @@ export function TrainLLMTab() {
       systemPrompt,
       question: trimmedQuestion,
       embeddingModel: selectedModel,
+      embeddingDimension: currentEmbeddingDimension,
       vectorStore,
       topK: resolvedTopK,
       datasetIds,
@@ -1177,6 +1210,7 @@ export function TrainLLMTab() {
   }, [
     chatbotId,
     chunksToRetrieve,
+    currentEmbeddingDimension,
     indexName,
     model,
     pineconeKey,
@@ -1253,6 +1287,7 @@ export function TrainLLMTab() {
       const embeddingState = {
         embedding: {
           model: selectedModel,
+          dimension: currentEmbeddingDimension,
           vectorStore: vectorStore,
           pineconeConfig: vectorStore === "pinecone" ? {
             apiKey: pineconeKey,
@@ -1317,6 +1352,7 @@ export function TrainLLMTab() {
     updateChatbotState, 
     embeddingSummary, 
     isEmbedding, 
+    currentEmbeddingDimension,
     selectedModel, 
     vectorStore, 
     pineconeKey, 
@@ -1394,6 +1430,8 @@ export function TrainLLMTab() {
             <EmbeddingConfiguration
               selectedModel={selectedModel}
               onSelectModel={(id) => setSelectedModel(id)}
+              selectedDimension={currentEmbeddingDimension}
+              onSelectDimension={handleSelectDimension}
               vectorStore={vectorStore}
               onVectorStoreChange={handleVectorStoreChange}
               pineconeKey={pineconeKey}

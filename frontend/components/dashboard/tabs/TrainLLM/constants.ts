@@ -1,4 +1,4 @@
-import { FileDatasetType, LLMProviderId, LLMModelOption } from "./types"
+import { FileDatasetType, LLMProviderId, LLMModelOption, EmbeddingModelId } from "./types"
 
 export const FILE_DATASET_TYPES: FileDatasetType[] = ["csv", "json", "pdf"]
 
@@ -11,34 +11,46 @@ export const STEPS = [
   { title: "Deploy Chatbot", subtitle: "Customize and ship your bot" },
 ]
 
+export const EMBEDDING_DIMENSION_OPTIONS: Record<EmbeddingModelId, number[]> = {
+  "openai-small": [1536, 512],
+  "openai-large": [3072, 1024, 256],
+  huggingface: [384],
+}
+
+export const DEFAULT_EMBEDDING_DIMENSIONS: Record<EmbeddingModelId, number> = {
+  "openai-small": EMBEDDING_DIMENSION_OPTIONS["openai-small"][0],
+  "openai-large": EMBEDDING_DIMENSION_OPTIONS["openai-large"][0],
+  huggingface: EMBEDDING_DIMENSION_OPTIONS["huggingface"][0],
+}
+
 export const EMBEDDING_MODELS = [
   {
     id: "openai-small",
-    name: "OpenAI Small",
+    name: "text-embedding-3-small",
     badge: "Paid",
-    dimensions: 1536,
+    dimensionOptions: EMBEDDING_DIMENSION_OPTIONS["openai-small"],
     // price: "$0.0004 / 1K tokens",
-    description: "Great for lightweight semantic search and FAQs.",
-    useCases: "Best for knowledge bases and support bots.",
-    notes: "Requires OpenAI API access.",
+    description: "Core OpenAI embedding model with full 1536-d output or a compact 512-d variant.",
+    useCases: "Best for knowledge bases, FAQ bots, and balanced latency vs. recall.",
+    notes: "Requires OpenAI/FastRouter access.",
     icon: "/openai.svg",
   },
   {
     id: "openai-large",
-    name: "OpenAI Large",
+    name: "text-embedding-3-large",
     badge: "Paid",
-    dimensions: 3072,
+    dimensionOptions: EMBEDDING_DIMENSION_OPTIONS["openai-large"],
     // price: "$0.0008 / 1K tokens",
-    description: "High dimensional embeddings for complex retrieval.",
-    useCases: "Recommended for enterprise assistants.",
-    notes: "Higher recall with larger context windows.",
+    description: "High-precision embeddings with up to 3072 dimensions plus lower-dimensional projections.",
+    useCases: "Recommended for enterprise-scale assistants and complex semantic retrieval.",
+    notes: "Higher recall when using the 3072-d space; lower dims reduce storage cost.",
     icon: "/openai.svg",
   },
   {
     id: "huggingface",
     name: "Hugging Face",
     badge: "Free",
-    dimensions: 384,
+    dimensionOptions: EMBEDDING_DIMENSION_OPTIONS["huggingface"],
     // price: "Free",
     description: "Open-source small footprint embeddings for free use.",
     useCases: "Ideal for experimentation and MVPs.",

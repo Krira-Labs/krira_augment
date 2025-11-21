@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 import { ENV } from "../lib/env.js";
+import { SUPPORTED_EMBEDDING_MODELS, normalizeEmbeddingModel, resolveEmbeddingDimension } from "../lib/embeddingModels.js";
 
 const PROVIDER_METADATA = {
   openai: { label: "OpenAI", description: "GPT series via FastRouter" },
@@ -249,11 +250,37 @@ export const downloadEvalSample = async (_req, res) => {
 export const testLlmConfiguration = async (req, res) => {
   try {
     const baseUrl = getPythonBaseUrl();
-    const requestedTopK = Number(req.body?.topK);
+    const body = req.body ?? {};
+
+    const rawEmbeddingModel = typeof body.embeddingModel === "string" ? body.embeddingModel.trim().toLowerCase() : "";
+    if (!SUPPORTED_EMBEDDING_MODELS.has(rawEmbeddingModel)) {
+      return res.status(400).json({ message: "Invalid embedding model selected" });
+    }
+
+    const dimensionOutcome = resolveEmbeddingDimension(rawEmbeddingModel, body.embeddingDimension);
+    if (dimensionOutcome.error) {
+      return res.status(400).json({ message: dimensionOutcome.error });
+    }
+
+    const embeddingModel = normalizeEmbeddingModel(rawEmbeddingModel);
+    const requestedTopK = Number(body.topK);
+    const datasetIds = Array.isArray(body.datasetIds) ? body.datasetIds : parseDatasetIds(body.datasetIds);
+
     const payload = {
-      ...req.body,
+      provider: body.provider,
+      modelId: body.modelId,
+      systemPrompt: body.systemPrompt,
+      question: body.question,
+      embeddingModel,
+      embeddingDimension: dimensionOutcome.value,
+      vectorStore: body.vectorStore,
+      datasetIds,
       topK: Number.isFinite(requestedTopK) ? requestedTopK : 30,
     };
+
+    if (body.pinecone) {
+      payload.pinecone = body.pinecone;
+    }
 
     const response = await axios.post(`${baseUrl}/api/llm/test`, payload);
 
@@ -277,14 +304,25 @@ export const runLlmEvaluation = async (req, res) => {
     const body = req.body ?? {};
     const provider = typeof body.provider === "string" ? body.provider.trim() : "";
     const modelId = typeof body.modelId === "string" ? body.modelId.trim() : "";
-    const embeddingModel = typeof body.embeddingModel === "string" ? body.embeddingModel.trim() : "";
+    const rawEmbeddingModel = typeof body.embeddingModel === "string" ? body.embeddingModel.trim().toLowerCase() : "";
     const vectorStore = typeof body.vectorStore === "string" ? body.vectorStore.trim() : "";
     const systemPrompt = typeof body.systemPrompt === "string" ? body.systemPrompt : "";
     const datasetIdList = parseDatasetIds(body.datasetIds);
 
-    if (!provider || !modelId || !embeddingModel || !vectorStore) {
+    if (!provider || !modelId || !rawEmbeddingModel || !vectorStore) {
       return res.status(400).json({ message: "Missing evaluation configuration" });
     }
+
+    if (!SUPPORTED_EMBEDDING_MODELS.has(rawEmbeddingModel)) {
+      return res.status(400).json({ message: "Invalid embedding model selected" });
+    }
+
+    const dimensionOutcome = resolveEmbeddingDimension(rawEmbeddingModel, body.embeddingDimension);
+    if (dimensionOutcome.error) {
+      return res.status(400).json({ message: dimensionOutcome.error });
+    }
+
+    const embeddingModel = normalizeEmbeddingModel(rawEmbeddingModel);
 
     if (datasetIdList.length === 0) {
       return res.status(400).json({ message: "At least one dataset must be selected for evaluation" });
@@ -305,6 +343,7 @@ export const runLlmEvaluation = async (req, res) => {
       modelId,
       systemPrompt,
       embeddingModel,
+      embeddingDimension: dimensionOutcome.value,
       vectorStore,
       datasetIds: datasetIdList,
       topK: parseInteger(body.topK, 30),

@@ -1,8 +1,7 @@
 import axios from "axios";
 
 import { ENV } from "../lib/env.js";
-
-const SUPPORTED_MODELS = new Set(["openai-small", "openai-large", "huggingface"]);
+import { SUPPORTED_EMBEDDING_MODELS, normalizeEmbeddingModel, resolveEmbeddingDimension } from "../lib/embeddingModels.js";
 const SUPPORTED_VECTOR_STORES = new Set(["pinecone", "chroma"]);
 const SUPPORTED_DATASET_TYPES = new Set(["csv", "json", "website", "pdf"]);
 
@@ -74,14 +73,21 @@ const buildPineconeConfig = (pineconeConfig = {}) => {
 
 export const startEmbedding = async (req, res) => {
   try {
-    const embeddingModel = sanitizeString(req.body?.embeddingModel).toLowerCase();
+    const rawEmbeddingModel = sanitizeString(req.body?.embeddingModel).toLowerCase();
     const vectorDatabase = sanitizeString(req.body?.vectorDatabase).toLowerCase();
     const datasetsInput = Array.isArray(req.body?.datasets) ? req.body.datasets : [];
     const pineconeConfig = req.body?.pineconeConfig ?? {};
 
-    if (!SUPPORTED_MODELS.has(embeddingModel)) {
+    if (!SUPPORTED_EMBEDDING_MODELS.has(rawEmbeddingModel)) {
       return res.status(400).json({ message: "Invalid embedding model selected" });
     }
+
+    const embeddingModel = normalizeEmbeddingModel(rawEmbeddingModel);
+    const dimensionOutcome = resolveEmbeddingDimension(rawEmbeddingModel, req.body?.embeddingDimension);
+    if (dimensionOutcome.error) {
+      return res.status(400).json({ message: dimensionOutcome.error });
+    }
+    const embeddingDimension = dimensionOutcome.value;
 
     if (!SUPPORTED_VECTOR_STORES.has(vectorDatabase)) {
       return res.status(400).json({ message: "Invalid vector database selected" });
@@ -109,6 +115,7 @@ export const startEmbedding = async (req, res) => {
 
     const payload = {
       embedding_model: embeddingModel,
+      dimension: embeddingDimension,
       vector_store: vectorDatabase,
       datasets: normalizedDatasets,
     };

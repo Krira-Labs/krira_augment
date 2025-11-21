@@ -42,7 +42,11 @@ async def embed_datasets(
 
         try:
             texts = [chunk.text for chunk in valid_chunks]
-            embeddings = await embedding_service.generate(payload.embedding_model, texts)
+            embeddings = await embedding_service.generate(
+                payload.embedding_model,
+                texts,
+                dimensions=payload.dimension,
+            )
 
             if len(embeddings) != len(valid_chunks):
                 raise EmbeddingServiceError("Embedding count does not match chunk count")

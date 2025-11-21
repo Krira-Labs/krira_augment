@@ -30,6 +30,7 @@ const chatbotSchema = new mongoose.Schema(
         // Step 2: Configure Embedding
         embedding: {
             model: String,
+            dimension: Number,
             vectorStore: {
                 type: String,
                 enum: ["pinecone", "chroma"],
