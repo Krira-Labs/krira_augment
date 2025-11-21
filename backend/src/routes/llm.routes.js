@@ -12,8 +12,11 @@ import {
 
 const router = express.Router();
 
-const projectRoot = path.resolve(process.cwd(), "..");
-const evaluationDirectory = path.join(projectRoot, "test");
+// Use /tmp for Render deployment (ephemeral filesystem)
+// In production on Render, use /tmp, in local use ./test
+const evaluationDirectory = process.env.NODE_ENV === 'production'
+  ? path.join('/tmp', 'test')
+  : path.join(process.cwd(), 'test');
 
 if (!fs.existsSync(evaluationDirectory)) {
   fs.mkdirSync(evaluationDirectory, { recursive: true });

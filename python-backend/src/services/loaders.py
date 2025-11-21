@@ -46,8 +46,16 @@ class DatasetLoader:
     def __init__(self, uploads_dir: Path | None = None) -> None:
         """Initialise loader with uploads directory and HTTP client session."""
 
-        default_uploads = Path(__file__).resolve().parents[3] / "uploads"
-        base_path = uploads_dir or default_uploads
+        # Use /tmp on production (Render), relative path locally
+        import os
+        if uploads_dir:
+            base_path = uploads_dir
+        elif os.getenv("ENVIRONMENT") == "production":
+            base_path = Path("/tmp/uploads")
+        else:
+            default_uploads = Path(__file__).resolve().parents[3] / "uploads"
+            base_path = default_uploads
+            
         self.uploads_dir = Path(base_path).resolve()
         self.uploads_dir.mkdir(parents=True, exist_ok=True)
 

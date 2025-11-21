@@ -20,9 +20,14 @@ const MODEL_ENV_PREFIXES = {
   deepseek: "FASTROUTER_DEEPSEEK_MODEL_",
 };
 
-const projectRoot = path.resolve(process.cwd(), "..");
-const testDirectory = path.join(projectRoot, "test");
-const sampleEvalPath = path.join(projectRoot, "backend", "assets", "sample_test.csv");
+// Use /tmp for Render deployment (ephemeral filesystem)
+const testDirectory = process.env.NODE_ENV === 'production'
+  ? path.join('/tmp', 'test')
+  : path.join(process.cwd(), 'test');
+
+const sampleEvalPath = process.env.NODE_ENV === 'production'
+  ? path.join('/tmp', 'sample_test.csv')
+  : path.join(process.cwd(), 'assets', 'sample_test.csv');
 
 if (!fs.existsSync(testDirectory)) {
   fs.mkdirSync(testDirectory, { recursive: true });
@@ -303,7 +308,7 @@ export const runLlmEvaluation = async (req, res) => {
       vectorStore,
       datasetIds: datasetIdList,
       topK: parseInteger(body.topK, 30),
-      csvPath: path.relative(projectRoot, uploadedFile.path).split(path.sep).join("/"),
+      csvPath: uploadedFile.path.split(path.sep).join("/"),
       originalFilename: uploadedFile.originalname,
     };
 
