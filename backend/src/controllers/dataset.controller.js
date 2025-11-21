@@ -61,10 +61,26 @@ const callPython = async (payload) => {
   }
 
   console.log(`[Node] Calling Python backend at ${ENV.PYTHON_BACKEND_URL}/uploaddataset`);
+
+  // If file_path is provided, read the file content and send as base64
+  let enhancedPayload = { ...payload };
+  if (payload.file_path) {
+    try {
+      const fs = await import('fs/promises');
+      const fileContent = await fs.readFile(payload.file_path);
+      enhancedPayload.file_content = fileContent.toString('base64');
+      enhancedPayload.file_path = null; // Remove file path since we're sending content
+      console.log(`[Node] Read file content (${fileContent.length} bytes) and converted to base64`);
+    } catch (error) {
+      console.error(`[Node] Failed to read file: ${error.message}`);
+      throw new Error(`Failed to read uploaded file: ${error.message}`);
+    }
+  }
+
   try {
     const response = await axios.post(
       `${ENV.PYTHON_BACKEND_URL.replace(/\/$/, "")}/uploaddataset`,
-      payload,
+      enhancedPayload,
       { timeout: 300000 } // 5 minutes timeout
     );
     console.log("[Node] Python backend responded successfully");

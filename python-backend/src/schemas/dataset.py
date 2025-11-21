@@ -18,6 +18,7 @@ class UploadDatasetRequest(BaseModel):
     chunk_size: Optional[int] = Field(1000, gt=0, description="Characters per chunk")
     chunk_overlap: Optional[int] = Field(200, ge=0, description="Overlap between chunks")
     file_path: Optional[str] = Field(None, description="Relative path to uploaded file")
+    file_content: Optional[str] = Field(None, description="Base64 encoded file content (alternative to file_path)")
     urls: Optional[List[str]] = Field(None, description="List of website URLs to ingest")
     file_name: Optional[str] = Field(None, description="Original name of the uploaded file")
 
