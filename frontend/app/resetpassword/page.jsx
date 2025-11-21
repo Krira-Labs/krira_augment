@@ -9,10 +9,10 @@ import { useAuth } from "@/contexts/AuthContext"
 import { authService } from "@/lib/api/auth.service"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { toast } = useToast()
@@ -47,7 +47,7 @@ export default function ResetPassword() {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        
+
         if (password !== confirmPassword) {
             toast({
                 title: "Error",
@@ -192,5 +192,17 @@ export default function ResetPassword() {
                 </div>
             </form>
         </section>
+    )
+}
+
+export default function ResetPassword() {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
     )
 }

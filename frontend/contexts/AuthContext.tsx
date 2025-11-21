@@ -12,6 +12,29 @@ export interface User {
   role: 'user' | 'admin';
   plan: string;
   isVerified: boolean;
+  authProvider?: string;
+  planPrice?: number;
+  billingCycle?: string;
+  subscriptionStart?: string;
+  subscriptionEnd?: string;
+  isActive?: boolean;
+  apiKey?: string;
+  apiUsage?: number;
+  questionLimit?: number;
+  questionsUsed?: number;
+  chatbotLimit?: number;
+  chatbotsCreated?: number;
+  teamMembers?: number;
+  supportType?: string;
+  watermarkType?: string;
+  analyticsEnabled?: boolean;
+  earlyAccess?: boolean;
+  vectorStoreType?: string;
+  systemPrompt?: string;
+  chatbots?: any[];
+  lastLogin?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Auth context type
@@ -53,6 +76,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: response.user.role,
               plan: response.user.plan,
               isVerified: response.user.isVerified,
+              authProvider: response.user.authProvider,
+              planPrice: response.user.planPrice,
+              billingCycle: response.user.billingCycle,
+              subscriptionStart: response.user.subscriptionStart,
+              subscriptionEnd: response.user.subscriptionEnd,
+              isActive: response.user.isActive,
+              apiKey: response.user.apiKey,
+              apiUsage: response.user.apiUsage,
+              questionLimit: response.user.questionLimit,
+              questionsUsed: response.user.questionsUsed,
+              chatbotLimit: response.user.chatbotLimit,
+              chatbotsCreated: response.user.chatbotsCreated,
+              teamMembers: response.user.teamMembers,
+              supportType: response.user.supportType,
+              watermarkType: response.user.watermarkType,
+              analyticsEnabled: response.user.analyticsEnabled,
+              earlyAccess: response.user.earlyAccess,
+              vectorStoreType: response.user.vectorStoreType,
+              systemPrompt: response.user.systemPrompt,
+              chatbots: response.user.chatbots,
+              lastLogin: response.user.lastLogin,
+              createdAt: response.user.createdAt,
+              updatedAt: response.user.updatedAt,
             };
             setUser(userData);
           } else {
@@ -127,6 +173,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: response.user.role,
           plan: response.user.plan,
           isVerified: response.user.isVerified,
+          authProvider: response.user.authProvider,
+          planPrice: response.user.planPrice,
+          billingCycle: response.user.billingCycle,
+          subscriptionStart: response.user.subscriptionStart,
+          subscriptionEnd: response.user.subscriptionEnd,
+          isActive: response.user.isActive,
+          apiKey: response.user.apiKey,
+          apiUsage: response.user.apiUsage,
+          questionLimit: response.user.questionLimit,
+          questionsUsed: response.user.questionsUsed,
+          chatbotLimit: response.user.chatbotLimit,
+          chatbotsCreated: response.user.chatbotsCreated,
+          teamMembers: response.user.teamMembers,
+          supportType: response.user.supportType,
+          watermarkType: response.user.watermarkType,
+          analyticsEnabled: response.user.analyticsEnabled,
+          earlyAccess: response.user.earlyAccess,
+          vectorStoreType: response.user.vectorStoreType,
+          systemPrompt: response.user.systemPrompt,
+          chatbots: response.user.chatbots,
+          lastLogin: response.user.lastLogin,
+          createdAt: response.user.createdAt,
+          updatedAt: response.user.updatedAt,
         };
         setUser(userData);
       }

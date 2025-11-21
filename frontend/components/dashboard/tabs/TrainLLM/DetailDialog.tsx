@@ -57,7 +57,7 @@ export function DetailDialog({ result, onOpenChange }: DetailDialogProps) {
                     contentPrecision: "Content Precision",
                     contextRecall: "Context Recall",
                   }
-                  const value = (result as Record<string, number | null | undefined>)[key]
+                  const value = result[key as keyof EvaluationRow] as number | null | undefined
                   return (
                     <div key={key} className="rounded-md border bg-muted/30 px-3 py-2">
                       <p className="text-[11px] uppercase text-muted-foreground">{labelMap[key]}</p>

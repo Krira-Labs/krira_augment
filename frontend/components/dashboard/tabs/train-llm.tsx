@@ -683,15 +683,15 @@ export function TrainLLMTab() {
 
   const dropzoneAccept = React.useMemo(() => {
     if (datasetType === "website") {
-      return {}
+      return undefined
     }
     if (datasetType === "csv") {
-      return { "text/csv": [".csv"] }
+      return { "text/csv": [".csv"] } as Record<string, string[]>
     }
     if (datasetType === "json") {
-      return { "application/json": [".json"] }
+      return { "application/json": [".json"] } as Record<string, string[]>
     }
-    return { "application/pdf": [".pdf"] }
+    return { "application/pdf": [".pdf"] } as Record<string, string[]>
   }, [datasetType])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

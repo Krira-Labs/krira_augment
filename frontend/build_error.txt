@@ -1,0 +1,50 @@
+﻿
+> kriraai@0.1.0 build
+> next build
+
+   Γû▓ Next.js 16.0.1 (Turbopack)
+   - Environments: .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 19.8s
+   Running TypeScript ...
+npm : Failed to compile.
+At line:1 char:1
++ npm run build 2>&1 | Out-File 
+-FilePath build_error.txt -Encoding UTF 
+...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecifi 
+   ed: (Failed to compile.:String) [],   
+  RemoteException
+    + FullyQualifiedErrorId : NativeComm 
+   andError
+ 
+
+./components/dashboard/tabs/TrainLLM/AiRe
+sponsePanel.tsx:53:12
+Type error: Property 'inline' does not 
+exist on type 
+'ClassAttributes<HTMLElement> & 
+HTMLAttributes<HTMLElement> & 
+ExtraProps'.
+
+[0m [90m 51 |[39m     )
+ [90m 52 |[39m   }[33m,[39m
+[31m[1m>[22m[39m[90m 53 |[39m   
+code[33m:[39m ({ inline[33m,[39m 
+className[33m,[39m children[33m,[39m 
+[33m...[39mprops }) [33m=>[39m {
+ [90m    |[39m            
+[31m[1m^[22m[39m
+ [90m 54 |[39m     [36mif[39m 
+(inline) {
+ [90m 55 |[39m       [36mreturn[39m (
+ [90m 56 |[39m         
+[33m<[39m[33mcode[39m 
+className[33m=[39m{cn([32m"rounded 
+bg-muted px-1 py-0.5 font-mono 
+text-[12px]"[39m[33m,[39m className)} 
+{[33m...[39mprops}[33m>[39m[0m
+Next.js build worker exited with code: 1 
+and signal: null
