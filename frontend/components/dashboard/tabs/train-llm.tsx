@@ -3,9 +3,9 @@
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
 import { useDropzone } from "react-dropzone"
-import axios from "axios"
 
 import { API_CONFIG } from "@/lib/api/config"
+import { apiClient, ApiError } from "@/lib/api/client"
 import { chatbotService } from "@/lib/api/chatbot.service"
 import { Button } from "@/components/ui/button"
 import {
@@ -309,13 +309,12 @@ export function TrainLLMTab() {
 
     setIsCreatingChatbot(true)
     try {
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/chatbots`,
-        { name: chatbotNameInput },
-        { withCredentials: true }
+      const response = await apiClient.post(
+        `/chatbots`,
+        { name: chatbotNameInput }
       )
-      setChatbotId(response.data._id)
-      toast({ title: "Chatbot created", description: `Started training pipeline for ${response.data.name}` })
+      setChatbotId(response._id)
+      toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
       setActiveStep(1)
     } catch (error) {
       console.error("Failed to create chatbot:", error)
@@ -335,18 +334,17 @@ export function TrainLLMTab() {
     console.log("chatbotId:", chatbotId);
 
     try {
-      const response = await axios.put(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/chatbots/${chatbotId}`,
-        data,
-        { withCredentials: true }
+      const response = await apiClient.put(
+        `/chatbots/${chatbotId}`,
+        data
       );
       
-      console.log("Update successful:", response.data);
+      console.log("Update successful:", response);
       toast({ title: "Progress saved" });
     } catch (error) {
       console.error("Error updating chatbot state:", error);
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.message || error.message
+      const message = error instanceof ApiError
+        ? error.message
         : "Failed to save progress";
       toast({ title: "Save failed", description: message });
     }
@@ -392,15 +390,11 @@ export function TrainLLMTab() {
   const handleDownloadSampleCsv = React.useCallback(async () => {
     setIsSampleDownloading(true)
     try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/llm/eval/sample`,
-        {
-          responseType: "blob",
-          withCredentials: true,
-        }
+      const blob = await apiClient.get(
+        `/llm/eval/sample`,
+        { responseType: "blob" }
       )
 
-      const blob = new Blob([response.data], { type: "text/csv;charset=utf-8" })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
@@ -415,8 +409,8 @@ export function TrainLLMTab() {
         description: "Fill in sr.no, input, and output columns before uploading.",
       })
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? error.message ?? "Unable to download sample CSV"
+      const message = error instanceof ApiError
+        ? error.message
         : error instanceof Error
           ? error.message
           : "Unable to download sample CSV"
@@ -473,16 +467,13 @@ export function TrainLLMTab() {
         }))
       }
 
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/llm/evaluate`,
+      const response = await apiClient.post(
+        `/llm/evaluate`,
         formData,
-        {
-          withCredentials: true,
-          timeout: 600000,
-        }
+        { timeout: 600000 }
       )
 
-      const data = response.data as {
+      const data = response as {
         metrics?: EvaluationMetrics
         rows?: EvaluationRow[]
         justifications?: MetricJustifications
@@ -510,8 +501,8 @@ export function TrainLLMTab() {
       
       toast({ title: "Evaluation complete", description: "Generated scores from your evaluation dataset." })
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? error.message ?? "Evaluation failed"
+      const message = error instanceof ApiError
+        ? error.message
         : error instanceof Error
           ? error.message
           : "Evaluation failed"
@@ -596,15 +587,12 @@ export function TrainLLMTab() {
     fieldMap.pdf.forEach((file) => formData.append("pdfFiles", file))
 
     try {
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/datasets/process`,
-        formData,
-        {
-          withCredentials: true,
-        }
+      const response = await apiClient.post(
+        `/datasets/process`,
+        formData
       )
 
-      const payload = response.data as {
+      const payload = response as {
         results: ManifestResult[]
         errors?: ManifestError[]
       }
@@ -657,8 +645,8 @@ export function TrainLLMTab() {
         setPreviewError(null)
       }
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? (error.response?.data?.detail ?? error.response?.data?.message ?? error.message ?? "Unable to process datasets")
+      const message = error instanceof ApiError
+        ? (error.data?.detail ?? error.message)
         : error instanceof Error
           ? error.message
           : "Unable to process datasets"
@@ -764,9 +752,8 @@ export function TrainLLMTab() {
       setModelError(null)
 
       try {
-        const response = await axios.get<LLMModelsResponsePayload>(
-          `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/llm/models`,
-          { withCredentials: true }
+        const response = await apiClient.get<LLMModelsResponsePayload>(
+          `/llm/models`
         )
 
         if (!active) {
@@ -783,7 +770,7 @@ export function TrainLLMTab() {
           glm: [],
         }
 
-        response.data.providers?.forEach((entry) => {
+        response.providers?.forEach((entry) => {
           if (!entry?.id) {
             return
           }
@@ -811,13 +798,9 @@ export function TrainLLMTab() {
         if (!active) {
           return
         }
-
-        const message = axios.isAxiosError(error)
-          ? (error.response?.data?.detail ?? error.message ?? "Unable to fetch LLM models")
-          : error instanceof Error
-            ? error.message
-            : "Unable to fetch LLM models"
-
+        const message = error instanceof ApiError
+          ? error.message
+          : "Unable to load LLM models"
         setModelError(message)
         toast({ title: "Failed to load models", description: message })
       } finally {
@@ -992,26 +975,21 @@ export function TrainLLMTab() {
     }
 
     try {
-      const response = await axios.post(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/embeddings/start`,
+      const response = await apiClient.post(
+        `/embeddings/start`,
         requestPayload,
-        {
-          withCredentials: true,
-          timeout: 600000,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
-        }
+        { timeout: 600000 }
       )
 
-      const summary = response.data as EmbeddingRunSummary
+      const summary = response as EmbeddingRunSummary
       setEmbeddingSummary(summary)
       setEmbeddingProgress(100)
       if (vectorStore === "pinecone") {
         setConnectionStatus("success")
       }
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? (error.response?.data?.message ?? error.response?.data?.detail ?? error.message ?? "Embedding failed")
+      const message = error instanceof ApiError
+        ? (error.data?.detail ?? error.message)
         : error instanceof Error
           ? error.message
           : "Embedding failed"
@@ -1122,18 +1100,17 @@ export function TrainLLMTab() {
     } 
 
     try {
-      const response = await axios.post<LLMTestResponsePayload>(
-        `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/llm/test`,
-        payload,
-        { withCredentials: true }
+      const response = await apiClient.post<LLMTestResponsePayload>(
+        `/llm/test`,
+        payload
       )
 
-      const data = response.data
+      const data = response
       setTestResponse(data.answer ?? "")
       setTestResponseData(data)
 
       const safeContext: RetrievedContextEntry[] = Array.isArray(data.context)
-        ? data.context.map((entry) => {
+        ? data.context.map((entry: any) => {
             const contextEntry = entry as RetrievedContextEntry
             const text =
               typeof contextEntry?.text === "string"
@@ -1166,19 +1143,15 @@ export function TrainLLMTab() {
 
       setTestContext(safeContext)
       
-      // Save test question and answer to MongoDB
+      // Save test result to MongoDB
       if (chatbotId) {
         try {
-          await axios.post(
-            `${API_CONFIG.BASE_URL.replace(/\/$/, "")}/chatbots/${chatbotId}/test-result`,
-            {
-              question: trimmedQuestion,
-              answer: data.answer || "",
-              context: safeContext,
-            },
-            { withCredentials: true }
+          await chatbotService.addTestResult(
+            chatbotId,
+            testQuestion,
+            data.answer ?? "",
+            safeContext
           );
-          console.log("Test result saved to MongoDB");
         } catch (saveError) {
           console.error("Failed to save test result:", saveError);
           // Don't show error to user, just log it
@@ -1188,16 +1161,16 @@ export function TrainLLMTab() {
       toast({ title: "LLM test successful", description: "Generated a response using your configured model." })
     } catch (error) {
       let message = "Unable to execute LLM test"
-      if (axios.isAxiosError(error)) {
-        const detail = error.response?.data?.detail
+      if (error instanceof ApiError) {
+        const detail = error.data?.detail
         if (detail && typeof detail === "object") {
           if (Array.isArray(detail)) {
-            message = detail.map((item) => (typeof item === "string" ? item : JSON.stringify(item))).join("; ")
+            message = detail.map((item: any) => (typeof item === "string" ? item : JSON.stringify(item))).join("; ")
           } else {
             message = JSON.stringify(detail)
           }
         } else {
-          message = detail ?? error.response?.data?.message ?? error.message ?? message
+          message = detail ?? error.message ?? message
         }
       } else if (error instanceof Error) {
         message = error.message

@@ -16,6 +16,7 @@ export class ApiError extends Error {
 interface RequestConfig extends RequestInit {
   timeout?: number;
   retry?: number;
+  responseType?: 'json' | 'text' | 'blob';
 }
 
 // API Client class
@@ -107,9 +108,13 @@ class ApiClient {
     const accessToken = this.getAccessToken();
 
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     };
+
+    // Only set Content-Type if it's not FormData (browser sets it with boundary for FormData)
+    if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
@@ -123,6 +128,18 @@ class ApiClient {
 
     try {
       const response = await this.fetchWithRetry(url, config);
+
+      // Handle blob responses (file downloads)
+      if (options.responseType === 'blob') {
+        if (!response.ok) {
+          // Try to read error as json/text if possible
+          const errorText = await response.text();
+          let errorData;
+          try { errorData = JSON.parse(errorText); } catch (e) { errorData = { message: errorText }; }
+          throw new ApiError(response.status, errorData.message || 'An error occurred', errorData);
+        }
+        return await response.blob() as any;
+      }
 
       // Handle different response types
       const contentType = response.headers.get('content-type');
@@ -212,10 +229,11 @@ class ApiClient {
     data?: any,
     options?: RequestConfig
   ): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     });
   }
 
@@ -225,10 +243,11 @@ class ApiClient {
     data?: any,
     options?: RequestConfig
   ): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     });
   }
 
@@ -238,10 +257,11 @@ class ApiClient {
     data?: any,
     options?: RequestConfig
   ): Promise<T> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     });
   }
 
