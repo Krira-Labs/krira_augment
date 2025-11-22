@@ -27,3 +27,26 @@ node_modules/
 # Environment
 .env.local
 .env.production
+
+# Debug and Test Scripts
+SDK_ERROR_ANALYSIS.md
+debug_sdk.py
+test_verification.py
+test_sdk_local.py
+test_node_connection.py
+test_deployed.py
+quick_test.py
+SOLUTION.py
+fix_env.ps1
+test_sdk_fixed.py
+test_chat_endpoint.py
+test_connectivity.py
+test_deployed_sdk.py
+RENDER_FIX_STEPS.py
+final_test.py
+test_after_deploy.py
+check_pinecone_data.py
+wait_and_test.py
+backend/check_bot.js
+backend/check_apikey.js
+backend/create_apikey.js
