@@ -961,6 +961,19 @@ class LLMService:
         context_text = ""
         contexts: List[RetrievedContext] = []
 
+        # Convert Pinecone config if it's a dict (from Node backend)
+        if isinstance(pinecone, dict):
+            try:
+                # Map camelCase to snake_case
+                pinecone_data = {
+                    "api_key": pinecone.get("apiKey") or pinecone.get("api_key"),
+                    "index_name": pinecone.get("indexName") or pinecone.get("index_name"),
+                    "namespace": pinecone.get("namespace"),
+                }
+                pinecone = PineconeConfig(**pinecone_data)
+            except Exception as exc:
+                logger.warning(f"Failed to convert Pinecone config: {exc}")
+
         if embedding_literal and vector_literal and dataset_id_list:
             try:
                 question_vector = await self._embedding_service.generate(
@@ -968,6 +981,7 @@ class LLMService:
                     [question],
                     dimensions=embedding_dimension,
                 )
+                
                 contexts = await self._retrieve_context(
                     vector_literal,
                     embedding_literal,
@@ -976,6 +990,7 @@ class LLMService:
                     dataset_ids=dataset_id_list,
                     pinecone=pinecone,
                 )
+
                 context_snippets = _prepare_context_snippets(contexts)
                 context_text = self._build_context_window(contexts)
             except Exception as exc:  # pragma: no cover - defensive guard
