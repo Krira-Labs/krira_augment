@@ -20,6 +20,7 @@ export interface Chatbot {
       chunksProcessed: number;
       chunksEmbedded: number;
     };
+    dimension?: number;
     isEmbedded: boolean;
   };
   llm?: {
