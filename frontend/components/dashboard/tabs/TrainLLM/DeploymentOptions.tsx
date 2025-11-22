@@ -1,5 +1,8 @@
+"use client"
+
 import * as React from "react"
-import { Bot } from "lucide-react"
+import { KeyRound } from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { coy as syntaxTheme } from "react-syntax-highlighter/dist/esm/styles/prism"
 
@@ -19,27 +22,48 @@ type DeploymentOptionsProps = {
   deploymentTab: string
   onDeploymentTabChange: (tab: string) => void
   codeSnippets: typeof CODE_SNIPPETS
-  setOpenDeleteDialog: (open: boolean) => void
 }
 
-export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSnippets, setOpenDeleteDialog }: DeploymentOptionsProps) {
+export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSnippets }: DeploymentOptionsProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const snippetEntries = React.useMemo(() => Object.entries(codeSnippets), [codeSnippets])
+  const availableTabs = React.useMemo(() => snippetEntries.map(([key]) => key), [snippetEntries])
+  const activeTab = availableTabs.includes(deploymentTab) ? deploymentTab : availableTabs[0] ?? ""
+
+  const handleNavigateToApiTab = React.useCallback(() => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "")
+    params.set("tab", "api-keys")
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : `${pathname}?tab=api-keys`)
+  }, [router, pathname, searchParams])
+
   return (
     <Card className="border-dashed">
       <CardHeader>
         <CardTitle className="text-base">Deployment Options</CardTitle>
-        <CardDescription>Embed via npm package or call the API directly.</CardDescription>
+        <CardDescription>Use your API key to query the chatbot via HTTP or the Python SDK.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs value={deploymentTab} onValueChange={onDeploymentTabChange}>
+        <Tabs value={activeTab} onValueChange={onDeploymentTabChange}>
           <TabsList>
-            <TabsTrigger value="javascript">JavaScript</TabsTrigger>
-            <TabsTrigger value="python">Python</TabsTrigger>
-            <TabsTrigger value="curl">cURL</TabsTrigger>
+            {snippetEntries.map(([key]) => (
+              <TabsTrigger key={key} value={key}>
+                {key === "curl" ? "cURL" : key.charAt(0).toUpperCase() + key.slice(1)}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          {Object.entries(codeSnippets).map(([key, snippet]) => (
+          {snippetEntries.map(([key, snippet]) => (
             <TabsContent key={key} value={key}>
               <div className="relative rounded-md border bg-slate-950/90">
-                <Button variant="ghost" size="sm" className="absolute right-2 top-2 text-white/80">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-2 text-white/80"
+                  onClick={() => navigator.clipboard.writeText(snippet.code)}
+                >
                   Copy
                 </Button>
                 <SyntaxHighlighter
@@ -53,13 +77,9 @@ export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSn
             </TabsContent>
           ))}
         </Tabs>
-        <div className="flex flex-wrap gap-3">
-          <Button className="gap-2">
-            <Bot className="h-4 w-4" /> Deploy chatbot
-          </Button>
-          <Button variant="outline">Save as draft</Button>
-          <Button variant="ghost" onClick={() => setOpenDeleteDialog(true)}>
-            Back to edit
+        <div>
+          <Button className="gap-2" onClick={handleNavigateToApiTab}>
+            <KeyRound className="h-4 w-4" /> Create API key
           </Button>
         </div>
       </CardContent>

@@ -907,6 +907,92 @@ class LLMService:
             raise LLMServiceError(f"Configuration test failed: {str(e)}")
 
 
+    async def public_chat(
+        self,
+        *,
+        provider: str,
+        model_id: str,
+        system_prompt: Optional[str],
+        vector_store: Optional[str],
+        embedding_model: Optional[str],
+        embedding_dimension: Optional[int],
+        dataset_ids: Sequence[str],
+        top_k: int,
+        question: str,
+        pinecone: Optional[PineconeConfig],
+    ) -> Dict[str, Any]:
+        provider_candidate = (provider or "").strip().lower()
+        if provider_candidate not in PROVIDER_METADATA:
+            raise LLMServiceError(f"Unsupported provider '{provider}'")
+        provider_literal = cast(ProviderLiteral, provider_candidate)
+
+        if not model_id or not model_id.strip():
+            raise LLMServiceError("Model identifier is required for chat")
+
+        dataset_id_list = [str(entry).strip() for entry in (dataset_ids or []) if str(entry).strip()]
+
+        embedding_literal: Optional[EmbeddingModel] = None
+        vector_literal: Optional[VectorStore] = None
+        if dataset_id_list and embedding_model and vector_store:
+            embedding_candidate = embedding_model.strip()
+            if embedding_candidate not in get_args(EmbeddingModel):
+                raise LLMServiceError(f"Unsupported embedding model '{embedding_model}'")
+            embedding_literal = cast(EmbeddingModel, embedding_candidate)
+
+            vector_candidate = vector_store.strip()
+            if vector_candidate not in get_args(VectorStore):
+                raise LLMServiceError(f"Unsupported vector store '{vector_store}'")
+            vector_literal = cast(VectorStore, vector_candidate)
+
+        api_key = self._settings.fastrouter_api_key
+        base_url = self._settings.fastrouter_base_url
+        if not api_key:
+            raise LLMServiceError("FastRouter API key is not configured")
+
+        resolved_prompt = (system_prompt or "").strip() or DEFAULT_SYSTEM_PROMPT
+        answer_chain = self._build_chain(
+            model=model_id,
+            api_key=api_key,
+            base_url=base_url,
+            system_prompt=resolved_prompt,
+        )
+
+        context_snippets: List[str] = []
+        context_text = ""
+        contexts: List[RetrievedContext] = []
+
+        if embedding_literal and vector_literal and dataset_id_list:
+            try:
+                question_vector = await self._embedding_service.generate(
+                    embedding_literal,
+                    [question],
+                    dimensions=embedding_dimension,
+                )
+                contexts = await self._retrieve_context(
+                    vector_literal,
+                    embedding_literal,
+                    question_vector[0],
+                    top_k=max(1, int(top_k) if isinstance(top_k, (int, float)) else 30),
+                    dataset_ids=dataset_id_list,
+                    pinecone=pinecone,
+                )
+                context_snippets = _prepare_context_snippets(contexts)
+                context_text = self._build_context_window(contexts)
+            except Exception as exc:  # pragma: no cover - defensive guard
+                logger.warning("Context retrieval failed for public chat: %s", exc)
+
+        llm_response = await answer_chain.ainvoke({"question": question, "context": context_text})
+        model_answer = getattr(llm_response, "content", None) or str(llm_response)
+
+        return {
+            "answer": model_answer.strip(),
+            "provider": provider_literal,
+            "model": model_id,
+            "context_snippets": context_snippets,
+            "context": contexts,
+        }
+
+
     async def evaluate_from_csv(
         self,
         *,

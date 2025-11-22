@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button"
 import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 
 import {
@@ -153,8 +152,7 @@ export function TrainLLMTab() {
   })
   
   const [activePreviewDevice, setActivePreviewDevice] = React.useState("desktop")
-  const [deploymentTab, setDeploymentTab] = React.useState("javascript")
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
+  const [deploymentTab, setDeploymentTab] = React.useState("python")
 
   const searchParams = useSearchParams()
   const editId = searchParams.get('editId')
@@ -1540,7 +1538,6 @@ export function TrainLLMTab() {
               deploymentTab={deploymentTab}
               onDeploymentTabChange={setDeploymentTab}
               codeSnippets={CODE_SNIPPETS}
-              setOpenDeleteDialog={setShowDeleteConfirm}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={handleBack}>
@@ -1564,22 +1561,6 @@ export function TrainLLMTab() {
 
       <DetailDialog result={selectedResult} onOpenChange={(open) => !open && setSelectedResult(null)} />
 
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete deployment draft?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove all unsaved appearance and behavior changes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90">
-              Delete draft
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </TooltipProvider>
   )
 }

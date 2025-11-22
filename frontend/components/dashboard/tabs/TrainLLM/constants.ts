@@ -141,31 +141,19 @@ export const DEFAULT_FRONTEND_MODELS: Record<LLMProviderId, LLMModelOption[]> = 
   ],
 }
 
-export const CODE_SNIPPETS: Record<string, { language: string; code: string }> = {
-  javascript: {
-    language: "tsx",
-    code: `import { KriraChatbot } from "kriraai";
+const PUBLIC_API_SNIPPET_URL = process.env.NEXT_PUBLIC_PUBLIC_API_URL ?? "https://rag-python-backend.onrender.com/v1"
 
-export function App() {
-  return (
-    <KriraChatbot
-      apiKey={process.env.NEXT_PUBLIC_KRIRA_KEY!}
-      botId="support-pro-bot"
-      theme="pro"
-    />
-  );
-}`,
-  },
+export const CODE_SNIPPETS: Record<string, { language: string; code: string }> = {
   python: {
     language: "python",
-    code: `from krira import KriraChatbot\n\nchatbot = KriraChatbot(api_key="YOUR_KEY", bot_id="support-pro-bot")\nresponse = chatbot.ask("How do I reset my password?")\nprint(response.answer)\n`,
+    code: `from kiraailabs import Kiraailabs\n\nclient = Kiraailabs(api_key="YOUR_KEY", bot_id="support-pro-bot")\nresponse = client.ask("How do I reset my password?")\nprint(response.answer)\n`,
   },
   curl: {
     language: "bash",
-    code: `curl https://api.krira.ai/v1/chatbots/support-pro-bot/messages \
+    code: `curl ${PUBLIC_API_SNIPPET_URL}/chat \
   -H "Authorization: Bearer $KRIRA_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"message":"How can I update billing?"}'`,
+  -d '{"bot_id":"support-pro-bot","query":"How can I update billing?"}'`,
   },
 }
 

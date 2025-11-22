@@ -36,7 +36,6 @@ type DeploymentSectionProps = {
   deploymentTab: string
   onDeploymentTabChange: (tab: string) => void
   codeSnippets: typeof CODE_SNIPPETS
-  setOpenDeleteDialog: (open: boolean) => void
 }
 
 export function DeploymentSection({
@@ -51,7 +50,6 @@ export function DeploymentSection({
   deploymentTab,
   onDeploymentTabChange,
   codeSnippets,
-  setOpenDeleteDialog,
 }: DeploymentSectionProps) {
   const themePresets: Array<{
     name: string
@@ -404,7 +402,6 @@ export function DeploymentSection({
           deploymentTab={deploymentTab}
           onDeploymentTabChange={onDeploymentTabChange}
           codeSnippets={codeSnippets}
-          setOpenDeleteDialog={setOpenDeleteDialog}
         />
       </CardContent>
     </Card>

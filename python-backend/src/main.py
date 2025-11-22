@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api.routes import embedding_router, llm_router, upload_router
+from .api.routes import embedding_router, llm_router, public_router, upload_router
 from .config import get_settings
 from .utils import get_logger
 
@@ -27,6 +27,7 @@ def create_app() -> FastAPI:
     application.include_router(upload_router)
     application.include_router(embedding_router)
     application.include_router(llm_router, prefix="/api")
+    application.include_router(public_router)
     return application
 
 

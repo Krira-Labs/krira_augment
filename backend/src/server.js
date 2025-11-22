@@ -10,6 +10,7 @@ import datasetRoutes from "./routes/dataset.routes.js";
 import embeddingRoutes from "./routes/embedding.routes.js";
 import llmRoutes from "./routes/llm.routes.js";
 import chatbotRoutes from "./routes/chatbot.routes.js";
+import apiKeyRoutes from "./routes/apiKey.routes.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -33,6 +34,7 @@ app.use("/api/datasets", datasetRoutes);
 app.use("/api/embeddings", embeddingRoutes);
 app.use("/api/llm", llmRoutes);
 app.use("/api/chatbots", chatbotRoutes);
+app.use("/api/keys", apiKeyRoutes);
 
 
 app.listen(PORT, async () => {

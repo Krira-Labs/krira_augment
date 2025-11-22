@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     fastrouter_base_url: str = Field("https://go.fastrouter.ai/api/v1", validation_alias="FASTROUTER_BASE_URL")
     llm_max_tokens: int = Field(validation_alias="LLM_MAX_TOKENS")
     evaluation_concurrency: int = Field(3, ge=1, le=16, validation_alias="EVALUATION_CONCURRENCY")
+    api_verification_url: str = Field(
+        "http://localhost:5000/api/keys/verify",
+        validation_alias="API_VERIFICATION_URL",
+    )
+    service_api_secret: Optional[str] = Field(None, validation_alias="SERVICE_API_SECRET")
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
