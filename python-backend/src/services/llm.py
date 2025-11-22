@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import csv
 import inspect
 import json
 import math
 import os
+import tempfile
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -700,6 +703,32 @@ class LLMService:
 
         return candidate
 
+    def _materialize_csv_content(self, csv_content: str, original_filename: Optional[str]) -> Path:
+        """Decode base64 CSV content into a temporary file accessible to this service."""
+
+        try:
+            decoded = base64.b64decode(csv_content, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise LLMServiceError("Evaluation CSV payload is invalid; provide base64 content") from exc
+
+        if not decoded.strip():
+            raise LLMServiceError("Evaluation CSV content is empty")
+
+        suffix = Path(original_filename or "evaluation.csv").suffix or ".csv"
+        temp_root = (self._evaluation_roots[0] if self._evaluation_roots else TEST_DIRECTORY).resolve()
+
+        try:
+            temp_root.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:  # pragma: no cover - filesystem guard
+            logger.error("Unable to create evaluation directory %s: %s", temp_root, exc)
+            raise LLMServiceError("Unable to prepare evaluation workspace") from exc
+
+        with tempfile.NamedTemporaryFile(prefix="evaluation-", suffix=suffix, dir=temp_root, delete=False) as handle:
+            handle.write(decoded)
+            temp_path = Path(handle.name).resolve()
+
+        return temp_path
+
     async def _score_answer_with_fastrouter(
         self,
         *,
@@ -890,6 +919,7 @@ class LLMService:
         top_k: int,
         embedding_dimension: Optional[int] = None,
         csv_path: str,
+        csv_content: Optional[str],
         pinecone: Optional[PineconeConfig],
         original_filename: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -917,11 +947,29 @@ class LLMService:
         if not dataset_id_list:
             raise LLMServiceError("At least one dataset must be selected for evaluation")
 
+        csv_file: Path
+        temp_csv_path: Optional[Path] = None
+
         try:
-            csv_file = self._resolve_csv_path(csv_path)
+            csv_path_candidate = (csv_path or "").strip()
+
+            if csv_content:
+                temp_csv_path = self._materialize_csv_content(csv_content, original_filename)
+                csv_file = temp_csv_path
+            else:
+                if not csv_path_candidate:
+                    raise LLMServiceError("Evaluation CSV path or content must be provided")
+                csv_file = self._resolve_csv_path(csv_path_candidate)
+
             csv_rows = _load_evaluation_csv(csv_file)
         except ValueError as exc:
             raise LLMServiceError(str(exc)) from exc
+        finally:
+            if temp_csv_path:
+                try:
+                    temp_csv_path.unlink(missing_ok=True)
+                except OSError:  # pragma: no cover - cleanup guard
+                    logger.warning("Failed to remove temporary evaluation CSV %s", temp_csv_path)
 
         if not csv_rows:
             raise LLMServiceError("Evaluation CSV is empty; add at least one row")

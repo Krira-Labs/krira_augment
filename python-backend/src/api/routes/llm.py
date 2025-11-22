@@ -132,6 +132,7 @@ async def evaluate_llm_configuration(
             dataset_ids=dataset_ids,
             top_k=request.get("topK", 30),
             csv_path=request.get("csvPath", ""),
+            csv_content=request.get("csvContent"),
             pinecone=pinecone_config,
             original_filename=request.get("originalFilename"),
         )

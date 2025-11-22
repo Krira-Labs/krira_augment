@@ -63,6 +63,7 @@ import { DetailDialog } from "./TrainLLM/DetailDialog"
 export function TrainLLMTab() {
   const { toast } = useToast()
   const [activeStep, setActiveStep] = React.useState(0)
+  const [maxUnlockedStep, setMaxUnlockedStep] = React.useState(0)
   const [datasetType, setDatasetType] = React.useState<DatasetType>("csv")
   const [fileUploads, setFileUploads] = React.useState<Record<FileDatasetType, FileUploadEntry[]>>({
     csv: [],
@@ -282,6 +283,7 @@ export function TrainLLMTab() {
 
         // Start from step 0 so user can edit bot name
         setActiveStep(0)
+        setMaxUnlockedStep(0)
 
         toast({
           title: "Editing chatbot",
@@ -316,6 +318,7 @@ export function TrainLLMTab() {
       setChatbotId(response._id)
       toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
       setActiveStep(1)
+      setMaxUnlockedStep((prev) => Math.max(prev, 1))
     } catch (error) {
       console.error("Failed to create chatbot:", error)
       toast({ title: "Creation failed", description: "Could not create chatbot. Please try again." })
@@ -1205,6 +1208,7 @@ export function TrainLLMTab() {
       // Create Chatbot Step - Skip if editing
       if (isEditMode) {
         setActiveStep(1)
+        setMaxUnlockedStep((prev) => Math.max(prev, 1))
         return
       }
       await handleCreateChatbot()
@@ -1314,7 +1318,9 @@ export function TrainLLMTab() {
        }
     }
 
-    setActiveStep((prev) => Math.min(prev + 1, STEPS.length - 1))
+    const nextStep = Math.min(activeStep + 1, STEPS.length - 1)
+    setActiveStep(nextStep)
+    setMaxUnlockedStep((prev) => Math.max(prev, nextStep))
   }, [
     activeStep, 
     isEditMode,
@@ -1344,6 +1350,14 @@ export function TrainLLMTab() {
   const handleBack = React.useCallback(() => {
     setActiveStep((prev) => Math.max(prev - 1, 0))
   }, [])
+
+  const handleStepChange = React.useCallback((stepIndex: number) => {
+    if (stepIndex > maxUnlockedStep) {
+      toast({ title: "Finish previous steps", description: "Complete the current step before continuing." })
+      return
+    }
+    setActiveStep(stepIndex)
+  }, [maxUnlockedStep, toast])
 
   const handleSaveDraft = () =>
     toast({ title: "Draft saved", description: "We'll keep your configuration ready for the next session." })
@@ -1544,7 +1558,7 @@ export function TrainLLMTab() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Stepper activeStep={activeStep} onStepChange={setActiveStep} />
+        <Stepper activeStep={activeStep} maxUnlockedStep={maxUnlockedStep} onStepChange={handleStepChange} />
         {renderStepContent()}
       </div>
 

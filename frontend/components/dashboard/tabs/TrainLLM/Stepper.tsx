@@ -14,9 +14,10 @@ import { STEPS } from "./constants"
 type StepperProps = {
   activeStep: number
   onStepChange: (index: number) => void
+  maxUnlockedStep?: number
 }
 
-export function Stepper({ activeStep, onStepChange }: StepperProps) {
+export function Stepper({ activeStep, onStepChange, maxUnlockedStep = activeStep }: StepperProps) {
   return (
     <Card className="border-none bg-gradient-to-r from-card via-background to-card text-foreground shadow-lg">
       <CardHeader className="space-y-4">
@@ -35,18 +36,27 @@ export function Stepper({ activeStep, onStepChange }: StepperProps) {
           <div className="grid gap-3 grid-cols-6">
             {STEPS.map((step, index) => {
               const status = index === activeStep ? "active" : index < activeStep ? "completed" : "pending"
+              const isLocked = index > maxUnlockedStep
               return (
                 <button
                   key={step.title}
+                  type="button"
                   className={cn(
                     "flex flex-col gap-2 rounded-xl border p-3 text-left transition",
                     status === "active"
                       ? "border-primary/80 bg-primary/10"
                       : status === "completed"
                         ? "border-emerald-400/30 bg-emerald-400/10"
-                        : "border-white/10 bg-white/5 hover:border-white/30"
+                        : "border-white/10 bg-white/5 hover:border-white/30",
+                    isLocked && "cursor-not-allowed opacity-60"
                   )}
-                  onClick={() => onStepChange(index)}
+                  disabled={isLocked}
+                  aria-disabled={isLocked}
+                  onClick={() => {
+                    if (!isLocked) {
+                      onStepChange(index)
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-2">
                     <span

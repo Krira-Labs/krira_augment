@@ -301,6 +301,15 @@ export const runLlmEvaluation = async (req, res) => {
       return res.status(400).json({ message: "Evaluation CSV file is required" });
     }
 
+    let csvContent;
+    try {
+      const fileBuffer = await fs.promises.readFile(uploadedFile.path);
+      csvContent = fileBuffer.toString("base64");
+    } catch (error) {
+      console.error("Failed to read uploaded evaluation CSV", error);
+      return res.status(500).json({ message: "Unable to read evaluation CSV content" });
+    }
+
     const body = req.body ?? {};
     const provider = typeof body.provider === "string" ? body.provider.trim() : "";
     const modelId = typeof body.modelId === "string" ? body.modelId.trim() : "";
@@ -348,6 +357,7 @@ export const runLlmEvaluation = async (req, res) => {
       datasetIds: datasetIdList,
       topK: parseInteger(body.topK, 30),
       csvPath: uploadedFile.path.split(path.sep).join("/"),
+      csvContent,
       originalFilename: uploadedFile.originalname,
     };
 
@@ -363,6 +373,8 @@ export const runLlmEvaluation = async (req, res) => {
     const response = await axios.post(`${baseUrl}/api/llm/evaluate`, evaluationPayload, {
       timeout: 600000,
     });
+
+    fs.promises.unlink(uploadedFile.path).catch(() => null);
 
     return res.status(200).json(response.data);
   } catch (error) {
