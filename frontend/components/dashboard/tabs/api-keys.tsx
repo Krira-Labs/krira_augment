@@ -190,7 +190,7 @@ export function ApiKeysTab() {
   -H "Content-Type: application/json" \
   -d '{"bot_id": "${fallbackBotId}", "query": "What is the status of my order?"}'`
 
-  const pythonSnippet = `from kiraailabs import Kiraailabs\n\nclient = Kiraailabs(api_key="${snippetKey}", bot_id="${fallbackBotId}")\nresponse = client.ask("What is the status of my order?")\nprint(response.answer)`
+  const pythonSnippet = `from kriralabs import Kriralabs\n\nclient = Kriralabs(api_key="${snippetKey}", bot_id="${fallbackBotId}")\nresponse = client.ask("What is the status of my order?")\nprint(response.answer)`
 
   return (
     <div className="space-y-6">
@@ -283,7 +283,7 @@ export function ApiKeysTab() {
           <CodeSnippet label="cURL" code={curlSnippet} />
           <CodeSnippet label="Python SDK" code={pythonSnippet} />
           <p className="text-sm text-muted-foreground">
-            Install the SDK with <code className="rounded bg-muted px-1">pip install kiraailabs</code>. Each request must include the
+            Install the SDK with <code className="rounded bg-muted px-1">pip install kriralabs</code>. Each request must include the
             <code className="rounded bg-muted px-1">Authorization: Bearer &lt;api_key&gt;</code> header.
           </p>
         </CardContent>

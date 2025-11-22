@@ -1,4 +1,4 @@
-"""HTTP client for interacting with the Kiraailabs public API."""
+"""HTTP client for interacting with the Kriralabs public API."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from requests.exceptions import Timeout as RequestsTimeout
 
 from .exceptions import (
     AuthenticationError,
-    KiraailabsError,
+    KriralabsError,
     PermissionDeniedError,
     RateLimitError,
     ServerError,
@@ -20,12 +20,12 @@ from .exceptions import (
 )
 
 DEFAULT_BASE_URL = "https://rag-python-backend.onrender.com/v1"
-USER_AGENT = "kiraailabs-sdk/0.1.0"
+USER_AGENT = "kriralabs-sdk/0.1.0"
 
 
 @dataclass(slots=True)
 class ChatResponse:
-    """Normalized response returned by ``Kiraailabs.ask``."""
+    """Normalized response returned by ``Kriralabs.ask``."""
 
     answer: str
     bot_id: str
@@ -33,8 +33,8 @@ class ChatResponse:
     raw: Dict[str, Any]
 
 
-class Kiraailabs:
-    """Thin wrapper around the Kiraailabs public chat API."""
+class Kriralabs:
+    """Thin wrapper around the Kriralabs public chat API."""
 
     def __init__(
         self,
@@ -111,9 +111,9 @@ class Kiraailabs:
         try:
             return self._session.post(url, json=payload, timeout=timeout)
         except RequestsTimeout as exc:  # pragma: no cover - network guard
-            raise TransportError("Request to Kiraailabs timed out") from exc
+            raise TransportError("Request to Kriralabs timed out") from exc
         except RequestsConnectionError as exc:  # pragma: no cover - network guard
-            raise TransportError("Unable to reach Kiraailabs API") from exc
+            raise TransportError("Unable to reach Kriralabs API") from exc
 
     def _parse_response(self, response: Response) -> Dict[str, Any]:
         if response.status_code == 401:
@@ -123,14 +123,14 @@ class Kiraailabs:
         if response.status_code == 429:
             raise RateLimitError("API rate limit exceeded. Slow down your requests.")
         if 400 <= response.status_code < 500:
-            raise KiraailabsError(self._extract_error_message(response) or "Invalid request")
+            raise KriralabsError(self._extract_error_message(response) or "Invalid request")
         if response.status_code >= 500:
-            raise ServerError("Kiraailabs service is temporarily unavailable")
+            raise ServerError("Kriralabs service is temporarily unavailable")
 
         try:
             return response.json()
         except ValueError as exc:  # pragma: no cover - defensive
-            raise ServerError("Received a non-JSON response from Kiraailabs") from exc
+            raise ServerError("Received a non-JSON response from Kriralabs") from exc
 
     @staticmethod
     def _extract_error_message(response: Response) -> str:
@@ -143,6 +143,6 @@ class Kiraailabs:
             return response.text.strip()
 
 
-# Backwards-compatible names requested by the product specification.
-KiraChatbot = Kiraailabs
-KiraailabsClient = Kiraailabs
+# Alternate export names for convenience.
+KriraChatbot = Kriralabs
+KriralabsClient = Kriralabs

@@ -1,4 +1,4 @@
-"""Setup script for the kiraailabs SDK package."""
+"""Setup script for the kriralabs SDK package."""
 
 from __future__ import annotations
 
@@ -9,19 +9,19 @@ from setuptools import find_packages, setup
 ROOT = Path(__file__).parent
 README = ROOT / "README.md"
 LONG_DESCRIPTION = (
-    README.read_text(encoding="utf-8") if README.exists() else "Official Python SDK for Kiraailabs."
+    README.read_text(encoding="utf-8") if README.exists() else "Official Python SDK for Kriralabs."
 )
 
 
 setup(
-    name="kiraailabs",
+    name="kriralabs",
     version="0.1.0",
-    description="Official Python SDK for building integrations with Kiraailabs chatbots",
+    description="Official Python SDK for building integrations with Kriralabs chatbots",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    author="Kiraailabs",
-    author_email="support@kiraailabs.com",
-    url="https://kiraailabs.com",
+    author="Kriralabs",
+    author_email="support@kriralabs.com",
+    url="https://kriralabs.com",
     license="MIT",
     packages=find_packages(exclude=("tests", "tests.*")),
     python_requires=">=3.9",
@@ -42,8 +42,8 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     project_urls={
-        "Source": "https://github.com/kiraailabs/sdk",
-        "Tracker": "https://github.com/kiraailabs/sdk/issues",
+        "Source": "https://github.com/kriralabs/sdk",
+        "Tracker": "https://github.com/kriralabs/sdk/issues",
     },
     include_package_data=True,
     zip_safe=False,
