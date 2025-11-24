@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Monitor, TabletSmartphone, Smartphone, Palette } from "lucide-react"
+import { Monitor, TabletSmartphone, Smartphone, Palette, type LucideIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,14 +16,14 @@ type WidgetPreviewProps = {
 }
 
 export function WidgetPreview({ appearance, behavior, branding, activeDevice, onDeviceChange }: WidgetPreviewProps) {
-  const deviceIconMap: Record<string, React.ElementType> = {
+  const deviceIconMap: Record<string, LucideIcon> = {
     desktop: Monitor,
     tablet: TabletSmartphone,
     mobile: Smartphone,
   }
 
   const headerBackground = appearance.useGradient
-    ? `linear-gradient(135deg, ${appearance.primary}, ${appearance.accent})`
+    ? `linear - gradient(135deg, ${appearance.primary}, ${appearance.accent})`
     : appearance.primary
   const readablePrimaryText = getReadableTextColor(appearance.primary)
   const readableButtonText = getReadableTextColor(appearance.button)
@@ -37,7 +37,7 @@ export function WidgetPreview({ appearance, behavior, branding, activeDevice, on
     background: withAlpha(appearance.accent, "1A"),
     color: appearance.text,
     borderRadius: bubbleRadius,
-    border: `1px solid ${withAlpha(appearance.accent, "33")}`,
+    border: `1px solid ${withAlpha(appearance.accent, "33")} `,
   }
 
   return (
@@ -47,16 +47,19 @@ export function WidgetPreview({ appearance, behavior, branding, activeDevice, on
           <Palette className="h-4 w-4" /> Live preview
         </div>
         <div className="flex gap-2">
-          {Object.entries(deviceIconMap).map(([device, Icon]) => (
-            <Button
-              key={device}
-              variant={activeDevice === device ? "default" : "outline"}
-              size="icon"
-              onClick={() => onDeviceChange(device)}
-            >
-              <Icon className="h-4 w-4" />
-            </Button>
-          ))}
+          {(['desktop', 'tablet', 'mobile'] as const).map((device) => {
+            const Icon = deviceIconMap[device];
+            return (
+              <Button
+                key={device}
+                variant={activeDevice === device ? "default" : "outline"}
+                size="icon"
+                onClick={() => onDeviceChange(device)}
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+            );
+          })}
         </div>
       </div>
       <div
@@ -81,7 +84,7 @@ export function WidgetPreview({ appearance, behavior, branding, activeDevice, on
               style={{
                 backgroundColor: withAlpha(appearance.background, "1A"),
                 color: readablePrimaryText,
-                border: `1px solid ${withAlpha(appearance.background, "33")}`,
+                border: `1px solid ${withAlpha(appearance.background, "33")} `,
               }}
             >
               {branding.chatbotName.slice(0, 2).toUpperCase()}
@@ -127,7 +130,7 @@ export function WidgetPreview({ appearance, behavior, branding, activeDevice, on
             className="flex-1 px-3 py-2 text-sm text-muted-foreground"
             style={{
               borderRadius: appearance.borderRadius,
-              border: `1px solid ${withAlpha(appearance.primary, "33")}`,
+              border: `1px solid ${withAlpha(appearance.primary, "33")} `,
               backgroundColor: withAlpha(appearance.background, "05"),
             }}
           >

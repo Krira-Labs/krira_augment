@@ -46,7 +46,7 @@ const formatHistoryDate = (value: string) => {
   }
 };
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<string, string>) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-sm">
