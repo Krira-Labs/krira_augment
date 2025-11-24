@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Montserrat } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -35,12 +36,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}>
-        <GoogleOAuthProvider clientId={googleClientId}>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
-        </GoogleOAuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <GoogleOAuthProvider clientId={googleClientId}>
+            <AuthProvider>
+              {children}
+              <Toaster />
+            </AuthProvider>
+          </GoogleOAuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -9,6 +9,7 @@ import {
   Loader2,
   LogOut,
   MessageSquare,
+  Home,
 } from "lucide-react";
 
 import {
@@ -35,6 +36,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Image from "next/image";
+import Link from "next/link";
 
 type SidebarItem = {
   value: string;
@@ -208,6 +210,22 @@ export function AppSidebar({
 
         {/* Footer */}
         <SidebarFooter className="border-t border-sidebar-border p-2 bg-sidebar">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`mb-2 w-full ${open ? "justify-start px-3" : "justify-center h-12 w-12 p-0"}`}
+                asChild
+              >
+                <Link href="/">
+                  <Home className={`${open ? "mr-2 h-4 w-4" : "h-5 w-5"}`} />
+                  {open && <span>Home</span>}
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            {!open && <TooltipContent side="right">Home</TooltipContent>}
+          </Tooltip>
+
           {open ? (
             <>
               <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3 transition-colors">

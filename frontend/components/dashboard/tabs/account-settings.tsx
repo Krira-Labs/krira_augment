@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTheme } from "next-themes"
 import { useToast } from "@/components/ui/use-toast"
 import {
   Card,
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button"
 type PreferenceKey = "productUpdates" | "weeklyDigest" | "criticalAlerts" | "betaAccess" | "aiEnhancements"
 
 export function AccountSettingsTab() {
+  const { setTheme, theme } = useTheme()
   const { toast } = useToast()
   const [preferences, setPreferences] = React.useState<Record<PreferenceKey, boolean>>({
     productUpdates: true,
@@ -93,6 +95,29 @@ export function AccountSettingsTab() {
       </Card>
 
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>
+              Customize how Krira AI looks on your device.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border bg-card/50 p-4">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Dark Mode</Label>
+                <p className="text-xs text-muted-foreground">
+                  Switch between light and dark themes
+                </p>
+              </div>
+              <Switch
+                checked={theme === "dark"}
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Workspace controls</CardTitle>
