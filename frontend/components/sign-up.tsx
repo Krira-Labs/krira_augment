@@ -103,10 +103,11 @@ export default function SignupPage() {
                 // Redirect to verification page
                 router.push('/verifyemail')
             }
-        } catch (error: any) {
+        } catch (error) {
+            const description = error instanceof Error ? error.message : "An error occurred during signup"
             toast({
                 title: "Signup Failed",
-                description: error.message || "An error occurred during signup",
+                description,
                 variant: "destructive",
             })
         } finally {

@@ -39,6 +39,9 @@ type EmbeddingConfigurationProps = {
   isEmbedding: boolean
   embeddingProgress: number
   embeddingSummary: EmbeddingRunSummary | null
+  allowedModels: string[]
+  allowedVectorStores: string[]
+  isPaidPlan: boolean
 }
 
 export function EmbeddingConfiguration({
@@ -58,6 +61,9 @@ export function EmbeddingConfiguration({
   isEmbedding,
   embeddingProgress,
   embeddingSummary,
+  allowedModels,
+  allowedVectorStores,
+  isPaidPlan,
 }: EmbeddingConfigurationProps) {
   const currentModel = EMBEDDING_MODELS.find((model) => model.id === selectedModel) ?? EMBEDDING_MODELS[0]
   const vectorOptions: Array<{ value: VectorStoreOption; label: string; description: string; icon: string; badge: "Paid" | "Free" }> = [
@@ -89,13 +95,17 @@ export function EmbeddingConfiguration({
           onValueChange={(value) => onSelectModel(value as EmbeddingModelId)}
           className="grid gap-4 lg:grid-cols-3"
         >
-          {EMBEDDING_MODELS.map((model) => (
-            <Label
+          {EMBEDDING_MODELS.map((model) => {
+            const disabled = !allowedModels.includes(model.id)
+            return (
+              <Label
               key={model.id}
               className={cn(
-                "flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition",
-                selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                "flex flex-col gap-3 rounded-xl border p-4 transition",
+                selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50",
+                disabled && "cursor-not-allowed opacity-60"
               )}
+              aria-disabled={disabled}
             >
               <RadioGroupItem value={model.id} className="sr-only" />
               <div className="flex items-start gap-3">
@@ -103,9 +113,14 @@ export function EmbeddingConfiguration({
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-semibold">{model.name}</span>
-                    <Badge className="border border-purple-200 bg-purple-100 text-purple-700">{model.badge}</Badge>
+                    {!isPaidPlan && (
+                      <Badge className={model.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700" : "border border-purple-200 bg-purple-100 text-purple-700"}>{model.badge}</Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">{model.description}</p>
+                  {disabled && (
+                    <p className="text-xs font-medium text-rose-500">Upgrade to unlock this embedding model.</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs">
@@ -115,10 +130,11 @@ export function EmbeddingConfiguration({
                     ? ` ${model.dimensionOptions.join(" / ")}`
                     : " Unknown"}
                 </span>
-                
+
               </div>
             </Label>
-          ))}
+            )
+          })}
         </RadioGroup>
 
         <Alert className="border-primary/40 bg-primary/5">
@@ -150,12 +166,17 @@ export function EmbeddingConfiguration({
           </div>
         )}
 
-        
+
 
         <Card className="border-dashed">
           <CardHeader>
             <CardTitle className="text-lg">Vector Store Setup</CardTitle>
             <CardDescription>Connect your managed vector store or use Krira default.</CardDescription>
+            {!isPaidPlan && (
+              <p className="text-xs font-medium text-amber-600">
+                Upgrade to unlock Pinecone and additional managed vector databases.
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <RadioGroup
@@ -163,13 +184,17 @@ export function EmbeddingConfiguration({
               onValueChange={(value) => onVectorStoreChange(value as VectorStoreOption)}
               className="grid gap-3 sm:grid-cols-2"
             >
-              {vectorOptions.map((option) => (
-                <Label
+              {vectorOptions.map((option) => {
+                const disabled = !allowedVectorStores.includes(option.value)
+                return (
+                  <Label
                   key={option.value}
                   className={cn(
-                    "flex cursor-pointer flex-col gap-3 rounded-lg border p-4",
-                    vectorStore === option.value ? "border-primary bg-primary/5" : "border-dashed"
+                    "flex flex-col gap-3 rounded-lg border p-4",
+                    vectorStore === option.value ? "border-primary bg-primary/5" : "border-dashed",
+                    disabled && "cursor-not-allowed opacity-60"
                   )}
+                  aria-disabled={disabled}
                 >
                   <RadioGroupItem value={option.value} className="sr-only" />
                   <div className="flex items-start gap-3">
@@ -183,13 +208,19 @@ export function EmbeddingConfiguration({
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-sm font-semibold">{option.label}</span>
-                        <Badge className="border border-purple-200 bg-purple-100 text-purple-700">{option.badge}</Badge>
+                        {!isPaidPlan && (
+                          <Badge className={option.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700" : "border border-purple-200 bg-purple-100 text-purple-700"}>{option.badge}</Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">{option.description}</p>
+                      {disabled && (
+                        <p className="text-xs font-medium text-rose-500">Available on paid plans.</p>
+                      )}
                     </div>
                   </div>
                 </Label>
-              ))}
+                )
+              })}
             </RadioGroup>
 
             {vectorStore === "pinecone" ? (
@@ -243,7 +274,7 @@ export function EmbeddingConfiguration({
             {isEmbedding ? "Embedding in progress" : "Start embedding"}
           </Button>
           {isEmbedding && <Progress value={embeddingProgress} />}
-          
+
           {embeddingSummary && (
             <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/30 p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">

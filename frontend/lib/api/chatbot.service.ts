@@ -5,6 +5,9 @@ export interface Chatbot {
   _id: string;
   userId: string;
   name: string;
+  status?: "draft" | "active";
+  isCompleted?: boolean;
+  completedAt?: string;
   dataset?: {
     type: string;
     files?: Array<{ datasetId?: string; name: string; size: number; chunks: number }>;
@@ -43,7 +46,7 @@ export interface Chatbot {
   testHistory?: Array<{
     question: string;
     answer: string;
-    context: any[];
+    context: ChatbotContextEntry[];
     timestamp: Date;
   }>;
   evaluation?: {
@@ -52,13 +55,19 @@ export interface Chatbot {
       size: number;
       path: string;
     };
-    metrics?: any;
-    rows?: any[];
-    justifications?: any;
+    metrics?: Record<string, unknown>;
+    rows?: Array<Record<string, unknown>>;
+    justifications?: Record<string, unknown>;
   };
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type ChatbotContextEntry = {
+  text?: string;
+  score?: number | null;
+  metadata?: Record<string, unknown>;
+};
 
 export interface GetAllChatbotsResponse {
   success: boolean;
@@ -78,11 +87,11 @@ export interface CreateChatbotData {
 
 export interface UpdateChatbotData {
   name?: string;
-  dataset?: any;
-  embedding?: any;
-  llm?: any;
-  testHistory?: any;
-  evaluation?: any;
+  dataset?: Chatbot["dataset"];
+  embedding?: Chatbot["embedding"];
+  llm?: Chatbot["llm"];
+  testHistory?: Chatbot["testHistory"];
+  evaluation?: Chatbot["evaluation"];
 }
 
 // Chatbot Service class
@@ -124,6 +133,10 @@ class ChatbotService {
     return apiClient.delete<ChatbotResponse>(`${this.baseUrl}/${id}`);
   }
 
+  async completeChatbot(id: string): Promise<Chatbot> {
+    return apiClient.post<Chatbot>(`${this.baseUrl}/${id}/complete`, {});
+  }
+
   /**
    * Add a test result to chatbot history
    */
@@ -131,7 +144,7 @@ class ChatbotService {
     id: string,
     question: string,
     answer: string,
-    context: any[]
+    context: ChatbotContextEntry[]
   ): Promise<Chatbot> {
     return apiClient.post<Chatbot>(`${this.baseUrl}/${id}/test-result`, {
       question,

@@ -6,6 +6,7 @@ import {
     addTestResult,
     getAllChatbots,
     deleteChatbot,
+    completeChatbot,
 } from "../controllers/chatbot.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
@@ -19,5 +20,6 @@ router.get("/:id", getChatbot);
 router.put("/:id", updateChatbot);
 router.delete("/:id", deleteChatbot); // Delete chatbot
 router.post("/:id/test-result", addTestResult);
+router.post("/:id/complete", completeChatbot);
 
 export default router;

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, ProfileResponse } from '@/lib/api/auth.service';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authService } from '@/lib/api/auth.service';
+import type { Chatbot } from '@/lib/api/chatbot.service';
 import { useRouter } from 'next/navigation';
 
 // User type
@@ -31,7 +32,11 @@ export interface User {
   earlyAccess?: boolean;
   vectorStoreType?: string;
   systemPrompt?: string;
-  chatbots?: any[];
+  chatbots?: Chatbot[];
+  storageLimitMb?: number;
+  storageUsedMb?: number;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -56,6 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      authService.clearAuth();
+      setUser(null);
+      router.push('/');
+    }
+  }, [router]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -96,6 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               vectorStoreType: response.user.vectorStoreType,
               systemPrompt: response.user.systemPrompt,
               chatbots: response.user.chatbots,
+              storageLimitMb: response.user.storageLimitMb,
+              storageUsedMb: response.user.storageUsedMb,
+              stripeCustomerId: response.user.stripeCustomerId,
+              stripeSubscriptionId: response.user.stripeSubscriptionId,
               lastLogin: response.user.lastLogin,
               createdAt: response.user.createdAt,
               updatedAt: response.user.updatedAt,
@@ -105,9 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('✗ No valid session found');
             setUser(null);
           }
-        } catch (error: any) {
-          console.log('✗ Auth check failed:', error.status || error.message);
-          // Token is invalid/expired or not present
+        } catch (error) {
+          if (error instanceof Error) {
+            console.log('✗ Auth check failed:', (error as { status?: number }).status || error.message);
+          } else {
+            console.log('✗ Auth check failed');
+          }
           setUser(null);
         }
       } catch (error) {
@@ -132,25 +156,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
     };
-  }, []);
+  }, [logout]);
 
   // Login function
   const login = (userData: User) => {
     console.log('Setting user in context:', userData.email);
     setUser(userData);
-  };
-
-  // Logout function
-  const logout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      authService.clearAuth();
-      setUser(null);
-      router.push('/');
-    }
   };
 
   // Update user function
@@ -193,6 +204,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           vectorStoreType: response.user.vectorStoreType,
           systemPrompt: response.user.systemPrompt,
           chatbots: response.user.chatbots,
+          storageLimitMb: response.user.storageLimitMb,
+          storageUsedMb: response.user.storageUsedMb,
+          stripeCustomerId: response.user.stripeCustomerId,
+          stripeSubscriptionId: response.user.stripeSubscriptionId,
           lastLogin: response.user.lastLogin,
           createdAt: response.user.createdAt,
           updatedAt: response.user.updatedAt,

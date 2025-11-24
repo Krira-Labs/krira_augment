@@ -59,10 +59,11 @@ export default function LoginPage() {
                     router.push('/dashboard')
                 }
             }
-        } catch (error: any) {
+        } catch (error) {
+            const description = error instanceof Error ? error.message : "Invalid credentials"
             toast({
                 title: "Login Failed",
-                description: error.message || "Invalid credentials",
+                description,
                 variant: "destructive",
             })
         } finally {

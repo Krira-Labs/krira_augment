@@ -2,6 +2,9 @@ import axios from "axios";
 import path from "path";
 
 import { ENV } from "../lib/env.js";
+import { getPlanDefinition } from "../lib/plan.js";
+import User from "../models/auth.model.js";
+import { redisClient } from "../utils/redis.js";
 
 const parseIntOrDefault = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -114,6 +117,41 @@ const formatError = (label, type, error) => ({
 export const uploadDataset = async (req, res) => {
   console.log("[Node] Received uploadDataset request");
   try {
+    const userRecord = await User.findById(req.user?._id).select("storageUsedMb storageLimitMb plan");
+    if (!userRecord) {
+      return res.status(401).json({ message: "Unable to locate user profile." });
+    }
+
+    const plan = getPlanDefinition(userRecord.plan ?? req.user?.plan);
+    const storageLimitMb = userRecord.storageLimitMb ?? req.user?.storageLimitMb ?? plan.storageLimitMb ?? 50;
+    const existingUsageMb = userRecord.storageUsedMb ?? 0;
+
+    const allFiles = Object.values(req.files ?? {}).flat();
+    const totalBytes = allFiles.reduce((acc, file) => acc + (file?.size ?? 0), 0);
+    const uploadMb = Number((totalBytes / (1024 * 1024)).toFixed(4));
+    const projectedUsageMb = Number((existingUsageMb + uploadMb).toFixed(4));
+
+    if (uploadMb > 0 && projectedUsageMb - storageLimitMb > 1e-6) {
+      const remainingMb = Math.max(storageLimitMb - existingUsageMb, 0);
+      return res.status(403).json({
+        message: `Upload exceeds your ${storageLimitMb} MB storage allowance. ${remainingMb.toFixed(2)} MB remaining.`,
+      });
+    }
+
+    let storageCommitted = false;
+    const commitStorageUsage = async () => {
+      if (storageCommitted || uploadMb <= 0) {
+        return;
+      }
+      storageCommitted = true;
+      userRecord.storageUsedMb = projectedUsageMb;
+      await userRecord.save();
+      if (req.user) {
+        req.user.storageUsedMb = projectedUsageMb;
+      }
+      await redisClient.cacheUser(userRecord._id.toString(), userRecord);
+    };
+
     const chunkSize = parseIntOrDefault(req.body?.chunkSize, 1000);
     const chunkOverlap = parseIntOrDefault(req.body?.chunkOverlap, 200);
 
@@ -215,6 +253,9 @@ export const uploadDataset = async (req, res) => {
       }
 
       const statusCode = errors.length > 0 && results.length === 0 ? 400 : 200;
+      if (statusCode === 200 && results.length > 0) {
+        await commitStorageUsage();
+      }
       return res.status(statusCode).json({ results, errors });
     }
 
@@ -251,6 +292,7 @@ export const uploadDataset = async (req, res) => {
     };
 
     const pythonResponse = await callPython(payload);
+    await commitStorageUsage();
     return res.status(200).json(pythonResponse);
   } catch (error) {
     if (error.response) {

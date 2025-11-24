@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Send, X, MessageSquare, Loader2, Minimize2 } from "lucide-react"
+import { Send, MessageSquare, Loader2, Minimize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { ENV } from "../lib/env.js";
 import { SUPPORTED_EMBEDDING_MODELS, normalizeEmbeddingModel, resolveEmbeddingDimension } from "../lib/embeddingModels.js";
+import { assertEmbeddingAccess, assertVectorStoreAccess } from "../lib/plan.js";
 const SUPPORTED_VECTOR_STORES = new Set(["pinecone", "chroma"]);
 const SUPPORTED_DATASET_TYPES = new Set(["csv", "json", "website", "pdf"]);
 
@@ -80,6 +81,13 @@ export const startEmbedding = async (req, res) => {
 
     if (!SUPPORTED_EMBEDDING_MODELS.has(rawEmbeddingModel)) {
       return res.status(400).json({ message: "Invalid embedding model selected" });
+    }
+
+    try {
+      assertEmbeddingAccess(req.user?.plan, rawEmbeddingModel);
+      assertVectorStoreAccess(req.user?.plan, vectorDatabase);
+    } catch (accessError) {
+      return res.status(accessError.statusCode ?? 403).json({ message: accessError.message });
     }
 
     const embeddingModel = normalizeEmbeddingModel(rawEmbeddingModel);

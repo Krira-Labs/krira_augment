@@ -1,12 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useDropzone } from "react-dropzone"
+import { Loader2 } from "lucide-react"
 
-import { API_CONFIG } from "@/lib/api/config"
 import { apiClient, ApiError } from "@/lib/api/client"
-import { chatbotService } from "@/lib/api/chatbot.service"
+import { chatbotService, type UpdateChatbotData } from "@/lib/api/chatbot.service"
+import { useAuth } from "@/contexts/AuthContext"
+import { resolvePlanAccess } from "@/lib/plan-access"
 import { Button } from "@/components/ui/button"
 import {
   TooltipProvider,
@@ -16,12 +18,10 @@ import { useToast } from "@/components/ui/use-toast"
 import {
   DatasetType,
   FileDatasetType,
-  DatasetPreview,
   PreviewDatasetResult,
   FileUploadEntry,
   VectorStoreOption,
   EmbeddingModelId,
-  EmbeddingSummaryResult,
   EmbeddingRunSummary,
   EmbeddingDatasetPayload,
   EvaluationMetrics,
@@ -49,6 +49,8 @@ import {
   FILE_DATASET_TYPES,
 } from "./TrainLLM/constants"
 
+const FINAL_STEP_INDEX = STEPS.length - 1
+
 import { Stepper } from "./TrainLLM/Stepper"
 import { CreateChatbotStep } from "./TrainLLM/CreateChatbotStep"
 import { DatasetUploader } from "./TrainLLM/DatasetUploader"
@@ -60,9 +62,13 @@ import { DeploymentSection } from "./TrainLLM/DeploymentSection"
 import { DetailDialog } from "./TrainLLM/DetailDialog"
 
 export function TrainLLMTab() {
+  const { user, updateUser } = useAuth()
+  const planAccess = React.useMemo(() => resolvePlanAccess(user?.plan), [user?.plan])
+  const router = useRouter()
   const { toast } = useToast()
   const [activeStep, setActiveStep] = React.useState(0)
   const [maxUnlockedStep, setMaxUnlockedStep] = React.useState(0)
+  const [canJumpFreely, setCanJumpFreely] = React.useState(false)
   const [datasetType, setDatasetType] = React.useState<DatasetType>("csv")
   const [fileUploads, setFileUploads] = React.useState<Record<FileDatasetType, FileUploadEntry[]>>({
     csv: [],
@@ -87,6 +93,16 @@ export function TrainLLMTab() {
   const [embeddingProgress, setEmbeddingProgress] = React.useState(0)
   const [vectorStore, setVectorStore] = React.useState<VectorStoreOption>("pinecone")
   const [embeddingSummary, setEmbeddingSummary] = React.useState<EmbeddingRunSummary | null>(null)
+
+  React.useEffect(() => {
+    if (!planAccess.allowedEmbeddingModels.includes(selectedModel)) {
+      setSelectedModel(planAccess.allowedEmbeddingModels[0] as EmbeddingModelId)
+    }
+    if (!planAccess.allowedVectorStores.includes(vectorStore)) {
+      setVectorStore(planAccess.allowedVectorStores[0] as VectorStoreOption)
+      setConnectionStatus("idle")
+    }
+  }, [planAccess, selectedModel, vectorStore])
   const currentEmbeddingDimension = modelDimensions[selectedModel] ?? DEFAULT_EMBEDDING_DIMENSIONS[selectedModel]
   const [provider, setProvider] = React.useState<LLMProviderId>("openai")
   const [model, setModel] = React.useState("")
@@ -158,10 +174,11 @@ export function TrainLLMTab() {
   const editId = searchParams.get('editId')
   
   const [chatbotId, setChatbotId] = React.useState<string | null>(null)
+  const [isChatbotCompleted, setIsChatbotCompleted] = React.useState(false)
+  const [isFinalizingChatbot, setIsFinalizingChatbot] = React.useState(false)
   const [chatbotNameInput, setChatbotNameInput] = React.useState("")
   const [isCreatingChatbot, setIsCreatingChatbot] = React.useState(false)
   const [isEditMode, setIsEditMode] = React.useState(false)
-  const [isLoadingChatbot, setIsLoadingChatbot] = React.useState(false)
 
   const clearPreview = React.useCallback(() => {
     setPreviewResults([])
@@ -170,177 +187,268 @@ export function TrainLLMTab() {
     setEmbeddingSummary(null)
   }, [])
 
+  const restoreChatbotState = React.useCallback((chatbot: Chatbot, startStep: number | null = null) => {
+    const pipelineCompleted = Boolean(chatbot.isCompleted || chatbot.status === "active")
+    
+    // Set edit mode and chatbot ID
+    setIsEditMode(true)
+    setChatbotId(chatbot._id)
+    setChatbotNameInput(chatbot.name)
+    setIsChatbotCompleted(pipelineCompleted)
+    setCanJumpFreely(pipelineCompleted)
+
+    // Pre-fill dataset data and create preview results to show files
+    if (chatbot.dataset) {
+      if (chatbot.dataset.type) {
+        setDatasetType(chatbot.dataset.type as DatasetType)
+      }
+      
+      // Create preview results from saved files
+      if (chatbot.dataset.files && chatbot.dataset.files.length > 0) {
+        const filePreviewResults: PreviewDatasetResult[] = chatbot.dataset.files.map((file, idx) => ({
+          id: file.datasetId || `saved-file-${idx}`,
+          label: file.name,
+          source: chatbot.dataset!.type as DatasetType,
+          status: "success" as const,
+          data: {
+            dataset_type: chatbot.dataset!.type as DatasetType,
+            chunk_size: 1000,
+            chunk_overlap: 200,
+            total_chunks: file.chunks || 0,
+            chunks: []
+          }
+        }))
+        setPreviewResults(filePreviewResults)
+        setShowPreview(true)
+      }
+      
+      // Handle URLs
+      if (chatbot.dataset.urls && chatbot.dataset.urls.length > 0) {
+        setWebsiteUrls(chatbot.dataset.urls)
+      }
+    }
+
+    // Pre-fill embedding data
+    if (chatbot.embedding) {
+      if (chatbot.embedding.model) {
+        const embeddingId = chatbot.embedding.model as EmbeddingModelId
+        setSelectedModel(embeddingId)
+        if (typeof chatbot.embedding.dimension === "number") {
+          const allowedDimensions = EMBEDDING_DIMENSION_OPTIONS[embeddingId] ?? []
+          const normalizedDimension = allowedDimensions.includes(chatbot.embedding.dimension)
+            ? chatbot.embedding.dimension
+            : DEFAULT_EMBEDDING_DIMENSIONS[embeddingId]
+          setModelDimensions((prev) => ({
+            ...prev,
+            [embeddingId]: normalizedDimension,
+          }))
+        }
+      }
+      if (chatbot.embedding.vectorStore) {
+        setVectorStore(chatbot.embedding.vectorStore as VectorStoreOption)
+      }
+      if (chatbot.embedding.pineconeConfig?.indexName) {
+        setIndexName(chatbot.embedding.pineconeConfig.indexName)
+      }
+      if (chatbot.embedding.isEmbedded) {
+        const persistedDatasets = chatbot.embedding.datasets ?? []
+        const datasetSummaries = persistedDatasets.length > 0
+          ? persistedDatasets.map((dataset, idx) => ({
+              dataset_id: dataset.id || `dataset-${idx}`,
+              label: dataset.label || `Dataset ${idx + 1}`,
+              chunks_processed: dataset.chunksProcessed ?? dataset.chunksEmbedded ?? 0,
+              chunks_embedded: dataset.chunksEmbedded ?? dataset.chunksProcessed ?? 0,
+            }))
+          : chatbot.dataset?.files?.map((f, idx) => ({
+              dataset_id: f.datasetId || `file-${idx}`,
+              label: f.name,
+              chunks_processed: f.chunks || 0,
+              chunks_embedded: f.chunks || 0,
+            })) || []
+
+        setEmbeddingSummary({
+          results: datasetSummaries.map((summary) => ({
+            dataset_id: summary.dataset_id,
+            label: summary.label,
+            vector_store: chatbot.embedding!.vectorStore as VectorStoreOption,
+            embedding_model: chatbot.embedding!.model as EmbeddingModelId,
+            chunks_processed: summary.chunks_processed,
+            chunks_embedded: summary.chunks_embedded,
+          })),
+          errors: [],
+        })
+      }
+    }
+
+    // Pre-fill LLM data
+    if (chatbot.llm) {
+      if (chatbot.llm.provider) {
+        setProvider(chatbot.llm.provider as LLMProviderId)
+      }
+      if (chatbot.llm.model) {
+        setModel(chatbot.llm.model)
+      }
+      if (chatbot.llm.topK) {
+        setChunksToRetrieve(chatbot.llm.topK)
+      }
+      if (chatbot.llm.systemPrompt) {
+        setSystemPrompt(chatbot.llm.systemPrompt)
+      }
+    }
+
+    // Pre-fill evaluation data
+    if (chatbot.evaluation?.metrics) {
+      setEvaluationMetrics(chatbot.evaluation.metrics as EvaluationMetrics)
+      if (chatbot.evaluation.rows) {
+        setEvaluationRows(chatbot.evaluation.rows as EvaluationRow[])
+      }
+      if (chatbot.evaluation.justifications) {
+        setEvaluationJustifications(chatbot.evaluation.justifications as MetricJustifications)
+      }
+    }
+
+    // Calculate step logic
+    if (startStep !== null) {
+      setActiveStep(startStep)
+      setMaxUnlockedStep((prev) => Math.max(prev, startStep))
+    } else {
+      // Determine the last completed step to resume from
+      let calculatedStep = 0
+      if (pipelineCompleted) {
+        calculatedStep = FINAL_STEP_INDEX
+      } else {
+        // Check milestones in reverse order
+        if (chatbot.evaluation?.metrics) calculatedStep = 5 // Ready for deploy
+        else if (chatbot.llm?.model) calculatedStep = 4 // Ready for eval
+        else if (chatbot.embedding?.isEmbedded) calculatedStep = 3 // Ready for LLM
+        else if (chatbot.dataset?.files?.length || chatbot.dataset?.urls?.length) calculatedStep = 2 // Ready for embed
+        else calculatedStep = 1 // Created, ready for upload
+      }
+      
+      setActiveStep(calculatedStep)
+      setMaxUnlockedStep(pipelineCompleted ? FINAL_STEP_INDEX : calculatedStep)
+    }
+
+  }, [])
+
   // Load existing chatbot data if editId is present
   React.useEffect(() => {
     if (!editId) return
 
     const loadChatbot = async () => {
       try {
-        setIsLoadingChatbot(true)
         const chatbot = await chatbotService.getChatbot(editId)
-        
-        // Set edit mode and chatbot ID
-        setIsEditMode(true)
-        setChatbotId(chatbot._id)
-        setChatbotNameInput(chatbot.name)
-
-        // Pre-fill dataset data and create preview results to show files
-        if (chatbot.dataset) {
-          if (chatbot.dataset.type) {
-            setDatasetType(chatbot.dataset.type as DatasetType)
-          }
-          
-          // Create preview results from saved files
-          if (chatbot.dataset.files && chatbot.dataset.files.length > 0) {
-            const filePreviewResults: PreviewDatasetResult[] = chatbot.dataset.files.map((file, idx) => ({
-              id: file.datasetId || `saved-file-${idx}`,
-              label: file.name,
-              source: chatbot.dataset!.type as DatasetType,
-              status: "success" as const,
-              data: {
-                dataset_type: chatbot.dataset!.type as DatasetType,
-                chunk_size: 1000,
-                chunk_overlap: 200,
-                total_chunks: file.chunks || 0,
-                chunks: []
-              }
-            }))
-            setPreviewResults(filePreviewResults)
-            setShowPreview(true)
-          }
-          
-          // Handle URLs
-          if (chatbot.dataset.urls && chatbot.dataset.urls.length > 0) {
-            setWebsiteUrls(chatbot.dataset.urls)
-          }
-        }
-
-        // Pre-fill embedding data
-        if (chatbot.embedding) {
-          if (chatbot.embedding.model) {
-            const embeddingId = chatbot.embedding.model as EmbeddingModelId
-            setSelectedModel(embeddingId)
-            if (typeof chatbot.embedding.dimension === "number") {
-              const allowedDimensions = EMBEDDING_DIMENSION_OPTIONS[embeddingId] ?? []
-              const normalizedDimension = allowedDimensions.includes(chatbot.embedding.dimension)
-                ? chatbot.embedding.dimension
-                : DEFAULT_EMBEDDING_DIMENSIONS[embeddingId]
-              setModelDimensions((prev) => ({
-                ...prev,
-                [embeddingId]: normalizedDimension,
-              }))
-            }
-          }
-          if (chatbot.embedding.vectorStore) {
-            setVectorStore(chatbot.embedding.vectorStore as VectorStoreOption)
-          }
-          if (chatbot.embedding.pineconeConfig?.indexName) {
-            setIndexName(chatbot.embedding.pineconeConfig.indexName)
-          }
-          if (chatbot.embedding.isEmbedded) {
-            const persistedDatasets = chatbot.embedding.datasets ?? []
-            const datasetSummaries = persistedDatasets.length > 0
-              ? persistedDatasets.map((dataset, idx) => ({
-                  dataset_id: dataset.id || `dataset-${idx}`,
-                  label: dataset.label || `Dataset ${idx + 1}`,
-                  chunks_processed: dataset.chunksProcessed ?? dataset.chunksEmbedded ?? 0,
-                  chunks_embedded: dataset.chunksEmbedded ?? dataset.chunksProcessed ?? 0,
-                }))
-              : chatbot.dataset?.files?.map((f, idx) => ({
-                  dataset_id: f.datasetId || `file-${idx}`,
-                  label: f.name,
-                  chunks_processed: f.chunks || 0,
-                  chunks_embedded: f.chunks || 0,
-                })) || []
-
-            setEmbeddingSummary({
-              results: datasetSummaries.map((summary) => ({
-                dataset_id: summary.dataset_id,
-                label: summary.label,
-                vector_store: chatbot.embedding!.vectorStore as VectorStoreOption,
-                embedding_model: chatbot.embedding!.model as EmbeddingModelId,
-                chunks_processed: summary.chunks_processed,
-                chunks_embedded: summary.chunks_embedded,
-              })),
-              errors: [],
-            })
-          }
-        }
-
-        // Pre-fill LLM data
-        if (chatbot.llm) {
-          if (chatbot.llm.provider) {
-            setProvider(chatbot.llm.provider as LLMProviderId)
-          }
-          if (chatbot.llm.model) {
-            setModel(chatbot.llm.model)
-          }
-          if (chatbot.llm.topK) {
-            setChunksToRetrieve(chatbot.llm.topK)
-          }
-          if (chatbot.llm.systemPrompt) {
-            setSystemPrompt(chatbot.llm.systemPrompt)
-          }
-        }
-
-        // Pre-fill evaluation data
-        if (chatbot.evaluation?.metrics) {
-          setEvaluationMetrics(chatbot.evaluation.metrics)
-          if (chatbot.evaluation.rows) {
-            setEvaluationRows(chatbot.evaluation.rows)
-          }
-          if (chatbot.evaluation.justifications) {
-            setEvaluationJustifications(chatbot.evaluation.justifications)
-          }
-        }
-
-        // Start from step 0 so user can edit bot name
-        setActiveStep(0)
-        setMaxUnlockedStep(0)
-
+        restoreChatbotState(chatbot, 0) // Start at 0 for editId flow to allow name edit
         toast({
           title: "Editing chatbot",
           description: `Loaded configuration for "${chatbot.name}"`
         })
-      } catch (error: any) {
-        console.error("Failed to load chatbot:", error)
-        toast({
-          title: "Error loading chatbot",
-          description: error.message || "Failed to load chatbot data"
-        })
-      } finally {
-        setIsLoadingChatbot(false)
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          toast({
+            title: "Chatbot not found",
+            description: "The chatbot you tried to edit no longer exists."
+          })
+          router.replace("/dashboard?tab=train-llm")
+        } else {
+          console.error("Failed to load chatbot:", error)
+          const message = error instanceof Error ? error.message : "Failed to load chatbot data"
+          toast({
+            title: "Error loading chatbot",
+            description: message
+          })
+        }
       }
     }
 
     loadChatbot()
-  }, [editId, toast])
+  }, [editId, router, toast, restoreChatbotState])
+
+  React.useEffect(() => {
+    if (!editId && !chatbotId) {
+      setCanJumpFreely(false)
+      setMaxUnlockedStep(0)
+    }
+  }, [editId, chatbotId])
 
   const handleCreateChatbot = React.useCallback(async () => {
-    if (!chatbotNameInput.trim()) {
+    const trimmedName = chatbotNameInput.trim()
+    if (!trimmedName) {
       toast({ title: "Name required", description: "Please enter a name for your chatbot." })
       return
     }
 
+    if (isEditMode && chatbotId) {
+      // Just updating name for existing bot
+      setIsCreatingChatbot(true)
+      try {
+        await chatbotService.updateChatbot(chatbotId, { name: trimmedName })
+        toast({ title: "Name updated", description: "Chatbot title saved." })
+        setActiveStep(1)
+        setMaxUnlockedStep((prev) => Math.max(prev, 1))
+      } catch (error) {
+        console.error("Failed to update chatbot name:", error)
+        const description = error instanceof ApiError ? error.message : "Could not update chatbot."
+        toast({ title: "Update failed", description })
+      } finally {
+        setIsCreatingChatbot(false)
+      }
+      return
+    }
+
+    // Creating new or resuming
     setIsCreatingChatbot(true)
     try {
-      const response = await apiClient.post(
-        `/chatbots`,
-        { name: chatbotNameInput }
-      )
-      setChatbotId(response._id)
-      toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
-      setActiveStep(1)
-      setMaxUnlockedStep((prev) => Math.max(prev, 1))
+      const response = await chatbotService.createChatbot({ name: trimmedName })
+      
+      // Check if we got a full chatbot object with existing state (Resume Flow)
+      // A new chatbot has empty dataset/embedding/llm usually, or we can check createdAt vs now
+      const isResumed = response.dataset?.files?.length > 0 || response.embedding?.isEmbedded || response.llm?.model
+      
+      if (isResumed || response.status === "active" || response._id) {
+        // If the backend returned a bot that looks 'used', or simply if we have an ID
+        // The backend logic we added returns the existing bot object if name matches.
+        
+        // Let's assume if it has an ID, we use it.
+        // But specifically for the "Resume" Toast:
+        if (response.dataset?.files?.length > 0 || response.embedding?.isEmbedded) {
+             toast({ title: "Pipeline Resumed", description: `Loaded existing progress for "${response.name}"` })
+             restoreChatbotState(response) // Auto-calculate step
+        } else {
+             // Likely a fresh bot or empty draft
+             setChatbotId(response._id)
+             setIsChatbotCompleted(Boolean(response.isCompleted))
+             toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
+             
+             // If it's a fresh bot (draft), we treat it as "Created"
+             // Set active step to 1 (Upload)
+             setActiveStep(1)
+             setMaxUnlockedStep((prev) => Math.max(prev, 1))
+             setIsEditMode(true) // Switch to edit mode so future saves work
+             setChatbotNameInput(response.name)
+        }
+      }
+
     } catch (error) {
-      console.error("Failed to create chatbot:", error)
-      toast({ title: "Creation failed", description: "Could not create chatbot. Please try again." })
+      // Only log unexpected errors to the console
+      if (!(error instanceof ApiError) || error.status !== 403) {
+        console.error("Failed to create chatbot:", error)
+      }
+
+      if (error instanceof ApiError) {
+        const description = error.status === 403
+          ? "You have reached the RAG pipeline limit. Delete an existing chatbot to create a new one."
+          : error.message ?? "Could not create chatbot. Please try again."
+        toast({ title: "Creation failed", description })
+      } else {
+        toast({ title: "Creation failed", description: "Could not create chatbot. Please try again." })
+      }
     } finally {
       setIsCreatingChatbot(false)
     }
-  }, [chatbotNameInput, toast])
+  }, [chatbotId, chatbotNameInput, isEditMode, toast, restoreChatbotState])
 
-  const updateChatbotState = React.useCallback(async (data: any) => {
+  const updateChatbotState = React.useCallback(async (data: UpdateChatbotData) => {
     if (!chatbotId) {
       console.error("Cannot update chatbot: No chatbotId");
       return;
@@ -365,6 +473,49 @@ export function TrainLLMTab() {
       toast({ title: "Save failed", description: message });
     }
   }, [chatbotId, toast]);
+
+  const finalizeChatbot = React.useCallback(async (): Promise<boolean> => {
+    if (!chatbotId || isChatbotCompleted || isFinalizingChatbot) {
+      return true;
+    }
+
+    setIsFinalizingChatbot(true);
+    try {
+      const response = await chatbotService.completeChatbot(chatbotId);
+      setIsChatbotCompleted(true);
+      setCanJumpFreely(true);
+      setMaxUnlockedStep(FINAL_STEP_INDEX);
+
+      const currentCount = user?.chatbotsCreated ?? 0;
+      const existingChatbots = Array.isArray(user?.chatbots) ? user.chatbots : [];
+      const mergedIds = Array.from(new Set([...existingChatbots, response._id]));
+
+      updateUser?.({
+        chatbotsCreated: currentCount + 1,
+        chatbots: mergedIds,
+      });
+
+      toast({
+        title: "Pipeline finalized",
+        description: "This chatbot now counts toward your plan usage.",
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 403) {
+        toast({
+          title: "Pipeline limit reached",
+          description: error.message ?? "You have reached the chatbot limit for your plan.",
+          variant: "destructive",
+        });
+      } else {
+        const message = error instanceof Error ? error.message : "Unable to finalize chatbot";
+        toast({ title: "Finalization failed", description: message });
+      }
+      return false;
+    } finally {
+      setIsFinalizingChatbot(false);
+    }
+  }, [chatbotId, isChatbotCompleted, isFinalizingChatbot, toast, updateUser, user?.chatbots, user?.chatbotsCreated]);
 
   const handleDatasetTypeChange = React.useCallback((type: DatasetType) => {
     setDatasetType(type)
@@ -552,7 +703,18 @@ export function TrainLLMTab() {
     return hasFiles || hasUrls
   }, [fileUploads, filteredUrls])
 
-  const availableModels = React.useMemo(() => llmModels[provider] ?? [], [llmModels, provider])
+  const providerModels = React.useMemo(() => llmModels[provider] ?? [], [llmModels, provider])
+  const availableModels = React.useMemo(() => {
+    if (planAccess.isPaid) {
+      return providerModels
+    }
+    const allowed = planAccess.allowedModelsByProvider?.[provider]
+    if (allowed && allowed.length > 0) {
+      const allowedSet = new Set(allowed)
+      return providerModels.filter((option) => allowedSet.has(option.id))
+    }
+    return providerModels.filter((option) => option.badge !== "Paid")
+  }, [planAccess.allowedModelsByProvider, planAccess.isPaid, provider, providerModels])
 
   const handlePreviewChunks = React.useCallback(async () => {
     if (isPreviewLoading) {
@@ -834,20 +996,25 @@ export function TrainLLMTab() {
   }, [toast])
 
   React.useEffect(() => {
-    const options = llmModels[provider] ?? []
-    if (options.length === 0) {
+    if (availableModels.length === 0) {
       setModel("")
       return
     }
 
-    setModel((current) => (options.some((option) => option.id === current) ? current : options[0].id))
-  }, [llmModels, provider])
+    setModel((current) => (availableModels.some((option) => option.id === current) ? current : availableModels[0].id))
+  }, [availableModels])
 
   React.useEffect(() => {
     setTestResponse(null)
     setTestContext([])
     setTestResponseData(null)
   }, [provider, model])
+
+  React.useEffect(() => {
+    if (!planAccess.allowedProviders.includes(provider)) {
+      setProvider(planAccess.allowedProviders[0] as LLMProviderId)
+    }
+  }, [planAccess, provider])
 
   const handleRemoveFile = React.useCallback(
     (type: FileDatasetType, id: string) => {
@@ -1126,27 +1293,26 @@ export function TrainLLMTab() {
       setTestResponseData(data)
 
       const safeContext: RetrievedContextEntry[] = Array.isArray(data.context)
-        ? data.context.map((entry: any) => {
-            const contextEntry = entry as RetrievedContextEntry
-            const text =
-              typeof contextEntry?.text === "string"
-                ? contextEntry.text
-                : String(contextEntry?.text ?? "")
+        ? data.context.map((rawEntry) => {
+            const textValue = (rawEntry as { text?: unknown })?.text
+            const text = typeof textValue === "string" ? textValue : String(textValue ?? "")
 
-            const rawScore = contextEntry?.score
-            let score: number | null | undefined
-            if (typeof rawScore === "number") {
-              score = rawScore
-            } else if (typeof rawScore === "string") {
-              const parsed = Number.parseFloat(rawScore)
-              score = Number.isNaN(parsed) ? null : parsed
-            } else {
-              score = null
-            }
+            const scoreValue = (rawEntry as { score?: unknown })?.score
+            const score = (() => {
+              if (typeof scoreValue === "number") {
+                return scoreValue
+              }
+              if (typeof scoreValue === "string") {
+                const parsed = Number.parseFloat(scoreValue)
+                return Number.isNaN(parsed) ? null : parsed
+              }
+              return null
+            })()
 
+            const metadataValue = (rawEntry as { metadata?: unknown })?.metadata
             const metadata =
-              contextEntry?.metadata && typeof contextEntry.metadata === "object" && !Array.isArray(contextEntry.metadata)
-                ? (contextEntry.metadata as Record<string, unknown>)
+              metadataValue && typeof metadataValue === "object" && !Array.isArray(metadataValue)
+                ? (metadataValue as Record<string, unknown>)
                 : {}
 
             return {
@@ -1178,15 +1344,17 @@ export function TrainLLMTab() {
     } catch (error) {
       let message = "Unable to execute LLM test"
       if (error instanceof ApiError) {
-        const detail = error.data?.detail
-        if (detail && typeof detail === "object") {
-          if (Array.isArray(detail)) {
-            message = detail.map((item: any) => (typeof item === "string" ? item : JSON.stringify(item))).join("; ")
-          } else {
-            message = JSON.stringify(detail)
-          }
+        const detail = (error.data as { detail?: unknown } | undefined)?.detail ?? error.data
+        if (Array.isArray(detail)) {
+          message = detail
+            .map((item) => (typeof item === "string" ? item : JSON.stringify(item)))
+            .join("; ")
+        } else if (detail && typeof detail === "object") {
+          message = JSON.stringify(detail)
+        } else if (typeof detail === "string") {
+          message = detail
         } else {
-          message = detail ?? error.message ?? message
+          message = error.message ?? message
         }
       } else if (error instanceof Error) {
         message = error.message
@@ -1322,22 +1490,27 @@ export function TrainLLMTab() {
     }
 
     if (activeStep === 4) {
-       // Test & Evaluate Step
-       if (evaluationCsv) {
-         const evalState = {
-           evaluation: {
-             file: {
-               name: evaluationCsv.name,
-               size: evaluationCsv.size,
-               path: evaluationCsv.name
-             },
-             metrics: evaluationMetrics,
-             rows: evaluationRows,
-             justifications: evaluationJustifications
-           }
-         }
-         await updateChatbotState(evalState)
-       }
+      // Test & Evaluate Step
+      if (evaluationCsv) {
+        const evalState = {
+          evaluation: {
+            file: {
+              name: evaluationCsv.name,
+              size: evaluationCsv.size,
+              path: evaluationCsv.name,
+            },
+            metrics: evaluationMetrics,
+            rows: evaluationRows,
+            justifications: evaluationJustifications,
+          },
+        }
+        await updateChatbotState(evalState)
+      }
+
+      const finalized = await finalizeChatbot()
+      if (!finalized) {
+        return
+      }
     }
 
     const nextStep = Math.min(activeStep + 1, STEPS.length - 1)
@@ -1366,6 +1539,7 @@ export function TrainLLMTab() {
     evaluationMetrics, 
     evaluationRows, 
     evaluationJustifications, 
+    finalizeChatbot, 
     toast
   ])
 
@@ -1374,12 +1548,13 @@ export function TrainLLMTab() {
   }, [])
 
   const handleStepChange = React.useCallback((stepIndex: number) => {
-    if (stepIndex > maxUnlockedStep) {
+    const allowedStep = canJumpFreely ? FINAL_STEP_INDEX : maxUnlockedStep
+    if (!canJumpFreely && stepIndex > allowedStep) {
       toast({ title: "Finish previous steps", description: "Complete the current step before continuing." })
       return
     }
     setActiveStep(stepIndex)
-  }, [maxUnlockedStep, toast])
+  }, [canJumpFreely, maxUnlockedStep, toast])
 
   const handleSaveDraft = () =>
     toast({ title: "Draft saved", description: "We'll keep your configuration ready for the next session." })
@@ -1393,6 +1568,7 @@ export function TrainLLMTab() {
             setChatbotNameInput={setChatbotNameInput}
             handleCreateChatbot={handleCreateChatbot}
             isCreatingChatbot={isCreatingChatbot}
+            isEditMode={isEditMode}
           />
         )
       case 1:
@@ -1453,6 +1629,9 @@ export function TrainLLMTab() {
               isEmbedding={isEmbedding}
               embeddingProgress={embeddingProgress}
               embeddingSummary={embeddingSummary}
+              allowedModels={planAccess.allowedEmbeddingModels}
+              allowedVectorStores={planAccess.allowedVectorStores}
+              isPaidPlan={planAccess.isPaid}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={handleBack}>
@@ -1496,6 +1675,8 @@ export function TrainLLMTab() {
               setChunksToRetrieve={setChunksToRetrieve}
               testResponseData={testResponseData}
               llmModels={llmModels}
+              allowedProviders={planAccess.allowedProviders}
+              isPaidPlan={planAccess.isPaid}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={handleBack}>
@@ -1539,8 +1720,15 @@ export function TrainLLMTab() {
                 <Button variant="outline" onClick={handleSaveDraft}>
                   Save draft
                 </Button>
-                <Button onClick={handleNext}>
-                  Next: Deploy Chatbot
+                <Button onClick={handleNext} disabled={isFinalizingChatbot} className="gap-2">
+                  {isFinalizingChatbot ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Finalizing...
+                    </>
+                  ) : (
+                    "Next: Deploy Chatbot"
+                  )}
                 </Button>
               </div>
             </div>
@@ -1576,10 +1764,12 @@ export function TrainLLMTab() {
     }
   }
 
+  const resolvedMaxUnlockedStep = canJumpFreely ? FINAL_STEP_INDEX : maxUnlockedStep
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Stepper activeStep={activeStep} maxUnlockedStep={maxUnlockedStep} onStepChange={handleStepChange} />
+        <Stepper activeStep={activeStep} maxUnlockedStep={resolvedMaxUnlockedStep} onStepChange={handleStepChange} />
         {renderStepContent()}
       </div>
 

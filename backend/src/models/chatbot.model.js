@@ -12,6 +12,18 @@ const chatbotSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        status: {
+            type: String,
+            enum: ["draft", "active"],
+            default: "draft",
+        },
+        isCompleted: {
+            type: Boolean,
+            default: false,
+        },
+        completedAt: {
+            type: Date,
+        },
         // Step 1: Upload Dataset
         dataset: {
             type: {

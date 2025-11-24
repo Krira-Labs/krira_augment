@@ -28,6 +28,9 @@ const config: Config = {
         input: "var(--input)",
         ring: "var(--ring)",
       },
+      fontFamily: {
+        montserrat: ["var(--font-montserrat)"],
+      },
     },
   },
   plugins: [],

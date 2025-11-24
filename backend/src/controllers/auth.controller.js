@@ -1,4 +1,5 @@
 import User from '../models/auth.model.js';
+import { Chatbot } from '../models/chatbot.model.js';
 import { emailService } from '../utils/email.js';
 import { redisClient } from '../utils/redis.js';
 import { tokenService } from '../utils/token.js';
@@ -779,6 +780,16 @@ export const profile = async (req, res) => {
       await redisClient.cacheUser(userId.toString(), user);
     }
 
+    const activePipelineCount = await Chatbot.countDocuments({
+      userId,
+      $or: [{ isCompleted: true }, { isCompleted: { $exists: false } }],
+    });
+    if ((user.chatbotsCreated ?? 0) !== activePipelineCount) {
+      user.chatbotsCreated = activePipelineCount;
+      await user.save();
+      await redisClient.cacheUser(userId.toString(), user);
+    }
+
     res.status(200).json({
       success: true,
       user: {
@@ -805,6 +816,8 @@ export const profile = async (req, res) => {
         chatbotLimit: user.chatbotLimit,
         chatbotsCreated: user.chatbotsCreated,
         teamMembers: user.teamMembers,
+        storageLimitMb: user.storageLimitMb,
+        storageUsedMb: user.storageUsedMb,
 
         // Features
         supportType: user.supportType,
@@ -821,6 +834,8 @@ export const profile = async (req, res) => {
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        stripeCustomerId: user.stripeCustomerId,
+        stripeSubscriptionId: user.stripeSubscriptionId,
       },
     });
   } catch (error) {

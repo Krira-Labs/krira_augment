@@ -46,6 +46,8 @@ type LLMConfigurationProps = {
   setChunksToRetrieve: (chunks: number) => void
   testResponseData: LLMTestResponsePayload | null
   llmModels: Record<LLMProviderId, LLMModelOption[]>
+  allowedProviders: string[]
+  isPaidPlan: boolean
 }
 
 export function LLMConfiguration({
@@ -72,8 +74,14 @@ export function LLMConfiguration({
   setChunksToRetrieve,
   testResponseData,
   llmModels,
+  allowedProviders,
+  isPaidPlan,
  }: LLMConfigurationProps) {
   const activeProvider = LLM_PROVIDERS.find((item) => item.value === provider) ?? LLM_PROVIDERS[0]
+  const handleProviderChange = (value: string) => {
+    if (!allowedProviders.includes(value)) return
+    onProviderChange(value)
+  }
 
   // Returns the provider-level badge: prefer "Free" if any free models exist,
   // otherwise return "Paid" if any paid models exist, else null.
@@ -97,22 +105,30 @@ export function LLMConfiguration({
       <CardHeader>
         <CardTitle>Choose LLM Provider</CardTitle>
         <CardDescription>Connect your large language model and configure prompts.</CardDescription>
+        {!isPaidPlan && (
+          <div className="text-xs font-medium text-rose-500">
+            Upgrade to unlock Anthropic, Perplexity, xAI, and additional managed providers.
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         <RadioGroup
           value={provider}
-          onValueChange={onProviderChange}
+          onValueChange={handleProviderChange}
           className="grid grid-cols-7 gap-2"
         >
           {LLM_PROVIDERS.map((option) => {
-            const providerBadge = getProviderBadge(option.value)
+            const disabled = !allowedProviders.includes(option.value)
+            const providerBadge = isPaidPlan ? null : getProviderBadge(option.value)
             return (
               <Label
                 key={option.value}
                 className={cn(
-                  "relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border px-2 py-2 text-center transition",
-                  provider === option.value ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                  "relative flex flex-col items-center gap-2 rounded-2xl border px-2 py-2 text-center transition",
+                  provider === option.value ? "border-primary bg-primary/5" : "hover:border-primary/50",
+                  disabled && "cursor-not-allowed opacity-60"
                 )}
+                aria-disabled={disabled}
               >
                 <RadioGroupItem value={option.value} className="sr-only" />
 
@@ -136,6 +152,9 @@ export function LLMConfiguration({
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-semibold leading-tight">{option.label}</p>
+                  {disabled && (
+                    <p className="text-[10px] font-medium text-rose-500">Upgrade plan to unlock</p>
+                  )}
                   
                 </div>
               </Label>
@@ -162,12 +181,12 @@ export function LLMConfiguration({
                     <SelectItem key={item.id} value={item.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{item.label}</span>
-                        {item.badge && item.badge === "Paid" && (
+                        {!isPaidPlan && item.badge === "Paid" && (
                           <span className="ml-2 rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
                             Paid
                           </span>
                         )}
-                        {item.badge && item.badge === "Free" && (
+                        {!isPaidPlan && item.badge === "Free" && (
                           <span className="ml-2 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                             Free
                           </span>
@@ -186,7 +205,9 @@ export function LLMConfiguration({
               )}
               {!isModelLoading && models.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  No models available for {activeProvider.label}. Configure them in the backend environment.
+                  {isPaidPlan
+                    ? `No models available for ${activeProvider.label}. Configure them in the backend environment.`
+                    : `No free models available for ${activeProvider.label}. Upgrade to unlock premium models like GPT-5 and Gemini Pro.`}
                 </p>
               )}
               {modelError && <p className="text-xs text-destructive">{modelError}</p>}

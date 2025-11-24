@@ -27,7 +27,7 @@ export const EMBEDDING_MODELS = [
   {
     id: "openai-small",
     name: "text-embedding-3-small",
-    badge: "Paid",
+    badge: "Free",
     dimensionOptions: EMBEDDING_DIMENSION_OPTIONS["openai-small"],
     // price: "$0.0004 / 1K tokens",
     description: "Core OpenAI embedding model with full 1536-d output or a compact 512-d variant.",
@@ -108,13 +108,13 @@ export const LLM_PROVIDERS: Array<{ value: LLMProviderId; label: string; logo: s
 export const DEFAULT_FRONTEND_MODELS: Record<LLMProviderId, LLMModelOption[]> = {
   openai: [
     { id: "openai/gpt-5", label: "GPT 5", badge: "Paid" },
-    { id: "openai/gpt-oss-120b", label: "GPT OSS 120B" },
+    { id: "openai/gpt-oss-120b", label: "GPT OSS 120B", badge: "Free" },
     { id: "openai/gpt-5.1", label: "GPT 5.1", badge: "Paid" },
     { id: "openai/gpt-4.1", label: "GPT 4.1", badge: "Free" },
   ],
   anthropic: [
     { id: "anthropic/claude-4.5-sonnet", label: "Claude 4.5 Sonnet", badge: "Paid" },
-    { id: "anthropic/claude-3-7-sonnet-20250219:thinking", label: "Claude 3.7 Sonnet" },
+    { id: "anthropic/claude-3-7-sonnet-20250219:thinking", label: "Claude 3.7 Sonnet", badge: "Paid" },
     { id: "anthropic/claude-opus-4.1", label: "Claude Opus 4.1", badge: "Paid" },
     { id: "anthropic/claude-opus-4-20250514", label: "Claude Opus 4", badge: "Paid" },
   ],
@@ -127,7 +127,7 @@ export const DEFAULT_FRONTEND_MODELS: Record<LLMProviderId, LLMModelOption[]> = 
     { id: "x-ai/grok-3-mini-beta", label: "Grok 3 Mini", badge: "Paid" },
   ],
   deepseek: [
-    { id: "deepseek-ai/DeepSeek-R1", label: "DeepSeek R1" },
+    { id: "deepseek-ai/DeepSeek-R1", label: "DeepSeek R1", badge: "Free" },
     { id: "deepseek/deepseek-v3.1", label: "DeepSeek v3.1", badge: "Paid" },
   ],
   perplexity: [

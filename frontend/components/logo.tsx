@@ -4,7 +4,7 @@ import Image from 'next/image';
 export const Logo = ({ className, uniColor }: { className?: string; uniColor?: boolean }) => {
     return (
         <Image
-            src="/logo.png"
+            src="/krira-augment-logo.png"
             alt="KriraAI Logo"
             width={40}
             height={40}

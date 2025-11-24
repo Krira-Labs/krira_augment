@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import jsPDF from "jspdf"
 import {
@@ -44,6 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { chatbotService, type Chatbot } from "@/lib/api/chatbot.service"
 
@@ -51,8 +52,9 @@ type ChatbotStatus = "active" | "inactive" | "draft"
 
 export function PreviousChatbotsTab() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
-  
+
   const [chatbots, setChatbots] = React.useState<Chatbot[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchTerm, setSearchTerm] = React.useState("")
@@ -61,27 +63,43 @@ export function PreviousChatbotsTab() {
   const [deleteChatbot, setDeleteChatbot] = React.useState<Chatbot | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
   const [deleteConfirmName, setDeleteConfirmName] = React.useState("")
+  const [showCancellationNotice, setShowCancellationNotice] = React.useState(false)
+  const [requiredCancellationCount, setRequiredCancellationCount] = React.useState(0)
 
-  // Fetch chatbots on mount
-  React.useEffect(() => {
-    loadChatbots()
-  }, [])
-
-  const loadChatbots = async () => {
+  const loadChatbots = React.useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await chatbotService.getAllChatbots()
       setChatbots(response.chatbots)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to load chatbots:", error)
+      const description = error instanceof Error ? error.message : "Failed to fetch your chatbots"
       toast({
         title: "Error loading chatbots",
-        description: error.message || "Failed to fetch your chatbots"
+        description,
       })
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast])
+
+  // Fetch chatbots on mount
+  React.useEffect(() => {
+    void loadChatbots()
+  }, [loadChatbots])
+
+  const cancelRequiredParam = searchParams.get("cancelRequired")
+
+  React.useEffect(() => {
+    if (cancelRequiredParam) {
+      const parsed = Number.parseInt(cancelRequiredParam, 10)
+      setRequiredCancellationCount(Number.isFinite(parsed) && parsed > 0 ? parsed : 1)
+      setShowCancellationNotice(true)
+    } else {
+      setShowCancellationNotice(false)
+      setRequiredCancellationCount(0)
+    }
+  }, [cancelRequiredParam])
 
   const handleDeleteChatbot = async () => {
     if (!deleteChatbot) return
@@ -89,7 +107,7 @@ export function PreviousChatbotsTab() {
     try {
       setIsDeleting(true)
       await chatbotService.deleteChatbot(deleteChatbot._id)
-      
+
       toast({
         title: "Chatbot deleted",
         description: `${deleteChatbot.name} has been deleted successfully`,
@@ -98,16 +116,26 @@ export function PreviousChatbotsTab() {
       // Remove from list
       setChatbots(prev => prev.filter(bot => bot._id !== deleteChatbot._id))
       setDeleteChatbot(null)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to delete chatbot:", error)
+      const description = error instanceof Error ? error.message : "Failed to delete the chatbot"
       toast({
         title: "Error deleting chatbot",
-        description: error.message || "Failed to delete the chatbot"
+        description,
       })
     } finally {
       setIsDeleting(false)
     }
   }
+
+  const handleDismissCancellationNotice = React.useCallback(() => {
+    setShowCancellationNotice(false)
+    router.replace("/dashboard?tab=previous-chatbots")
+  }, [router])
+
+  const handleBackToPricing = React.useCallback(() => {
+    router.push("/dashboard?tab=pricing")
+  }, [router])
 
   const handleEditChatbot = (chatbot: Chatbot) => {
     // Navigate to train-llm tab with chatbot ID as query parameter
@@ -117,24 +145,24 @@ export function PreviousChatbotsTab() {
   const handleExportDetails = (chatbot: Chatbot) => {
     try {
       const doc = new jsPDF()
-      
+
       // Add title
       doc.setFontSize(20)
       doc.setTextColor(37, 99, 235) // Blue color
       doc.text("Chatbot Configuration Details", 20, 20)
-      
+
       // Reset for body text
       doc.setFontSize(10)
       doc.setTextColor(0, 0, 0)
-      
+
       let yPosition = 35
-      
+
       // Basic Information
       doc.setFontSize(14)
       doc.setFont("helvetica", "bold")
       doc.text("Basic Information", 20, yPosition)
       yPosition += 8
-      
+
       doc.setFontSize(10)
       doc.setFont("helvetica", "normal")
       doc.text(`Name: ${chatbot.name}`, 25, yPosition)
@@ -145,19 +173,19 @@ export function PreviousChatbotsTab() {
       yPosition += 6
       doc.text(`Last Updated: ${new Date(chatbot.updatedAt).toLocaleString()}`, 25, yPosition)
       yPosition += 10
-      
+
       // Dataset Information
       if (chatbot.dataset) {
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.text("Dataset Information", 20, yPosition)
         yPosition += 8
-        
+
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         doc.text(`Type: ${chatbot.dataset.type || "N/A"}`, 25, yPosition)
         yPosition += 6
-        
+
         if (chatbot.dataset.files && chatbot.dataset.files.length > 0) {
           doc.text(`Files (${chatbot.dataset.files.length}):`, 25, yPosition)
           yPosition += 6
@@ -167,7 +195,7 @@ export function PreviousChatbotsTab() {
             yPosition += 5
           })
         }
-        
+
         if (chatbot.dataset.urls && chatbot.dataset.urls.length > 0) {
           yPosition += 2
           doc.text(`URLs (${chatbot.dataset.urls.length}):`, 25, yPosition)
@@ -179,19 +207,19 @@ export function PreviousChatbotsTab() {
         }
         yPosition += 5
       }
-      
+
       // Embedding Configuration
       if (chatbot.embedding) {
         if (yPosition > 250) {
           doc.addPage()
           yPosition = 20
         }
-        
+
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.text("Embedding Configuration", 20, yPosition)
         yPosition += 8
-        
+
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         doc.text(`Model: ${chatbot.embedding.model || "N/A"}`, 25, yPosition)
@@ -200,12 +228,12 @@ export function PreviousChatbotsTab() {
         yPosition += 6
         doc.text(`Status: ${chatbot.embedding.isEmbedded ? "✓ Embedded" : "✗ Not Embedded"}`, 25, yPosition)
         yPosition += 6
-        
+
         if (chatbot.embedding.pineconeConfig) {
           doc.text(`Pinecone Index: ${chatbot.embedding.pineconeConfig.indexName || "N/A"}`, 25, yPosition)
           yPosition += 6
         }
-        
+
         if (chatbot.embedding.stats) {
           doc.text(`Chunks Processed: ${chatbot.embedding.stats.chunksProcessed || 0}`, 25, yPosition)
           yPosition += 6
@@ -214,19 +242,19 @@ export function PreviousChatbotsTab() {
         }
         yPosition += 5
       }
-      
+
       // LLM Configuration
       if (chatbot.llm) {
         if (yPosition > 250) {
           doc.addPage()
           yPosition = 20
         }
-        
+
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.text("LLM Configuration", 20, yPosition)
         yPosition += 8
-        
+
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         doc.text(`Provider: ${chatbot.llm.provider || "N/A"}`, 25, yPosition)
@@ -235,7 +263,7 @@ export function PreviousChatbotsTab() {
         yPosition += 6
         doc.text(`Top-K Chunks: ${chatbot.llm.topK || "N/A"}`, 25, yPosition)
         yPosition += 6
-        
+
         if (chatbot.llm.systemPrompt) {
           doc.text("System Prompt:", 25, yPosition)
           yPosition += 6
@@ -245,19 +273,19 @@ export function PreviousChatbotsTab() {
         }
         yPosition += 5
       }
-      
+
       // Test Results
       if (chatbot.tests && chatbot.tests.length > 0) {
         if (yPosition > 220) {
           doc.addPage()
           yPosition = 20
         }
-        
+
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.text(`Test Results (${chatbot.tests.length} tests)`, 20, yPosition)
         yPosition += 8
-        
+
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         chatbot.tests.slice(0, 5).forEach((test, idx) => {
@@ -273,43 +301,43 @@ export function PreviousChatbotsTab() {
           doc.text(splitAnswer, 30, yPosition)
           yPosition += (splitAnswer.length * 5) + 5
         })
-        
+
         if (chatbot.tests.length > 5) {
           doc.text(`... and ${chatbot.tests.length - 5} more tests`, 25, yPosition)
           yPosition += 10
         }
       }
-      
+
       // Evaluation Metrics
       if (chatbot.evaluation && chatbot.evaluation.metrics) {
         if (yPosition > 230) {
           doc.addPage()
           yPosition = 20
         }
-        
+
         doc.setFontSize(14)
         doc.setFont("helvetica", "bold")
         doc.text("Evaluation Metrics", 20, yPosition)
         yPosition += 8
-        
+
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal")
         const metrics = chatbot.evaluation.metrics
-        doc.text(`Accuracy: ${metrics.accuracy?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Accuracy: ${Number(metrics.accuracy || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Evaluation Score: ${metrics.evaluationScore?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Evaluation Score: ${Number(metrics.evaluationScore || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Semantic Accuracy: ${metrics.semanticAccuracy?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Semantic Accuracy: ${Number(metrics.semanticAccuracy || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Faithfulness: ${metrics.faithfulness?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Faithfulness: ${Number(metrics.faithfulness || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Answer Relevancy: ${metrics.answerRelevancy?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Answer Relevancy: ${Number(metrics.answerRelevancy || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Content Precision: ${metrics.contentPrecision?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Content Precision: ${Number(metrics.contentPrecision || 0).toFixed(2)}%`, 25, yPosition)
         yPosition += 6
-        doc.text(`Context Recall: ${metrics.contextRecall?.toFixed(2)}%`, 25, yPosition)
+        doc.text(`Context Recall: ${Number(metrics.contextRecall || 0).toFixed(2)}%`, 25, yPosition)
       }
-      
+
       // Footer
       const pageCount = doc.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
@@ -319,19 +347,20 @@ export function PreviousChatbotsTab() {
         doc.text(`Page ${i} of ${pageCount}`, 180, 285)
         doc.text(`Generated on ${new Date().toLocaleString()}`, 20, 285)
       }
-      
+
       // Save the PDF
       doc.save(`${chatbot.name.replace(/[^a-z0-9]/gi, '_')}_details.pdf`)
-      
+
       toast({
         title: "PDF exported successfully",
         description: `Downloaded details for "${chatbot.name}"`
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to export PDF:", error)
+      const description = error instanceof Error ? error.message : "Failed to export chatbot details"
       toast({
         title: "Export failed",
-        description: error.message || "Failed to export chatbot details"
+        description,
       })
     }
   }
@@ -389,6 +418,25 @@ export function PreviousChatbotsTab() {
         </Button>
       </header>
 
+      {showCancellationNotice && (
+        <Alert variant="default" className="flex flex-col gap-3 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-amber-900 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+          <div>
+            <AlertTitle className="text-base font-semibold">Delete chatbots before cancelling</AlertTitle>
+            <AlertDescription>
+              Remove {requiredCancellationCount} chatbot{requiredCancellationCount === 1 ? "" : "s"} to return to the Free plan.
+            </AlertDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleBackToPricing}>
+              Back to pricing
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleDismissCancellationNotice}>
+              Dismiss
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="col-span-full flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
           <div className="flex w-full items-center gap-2 lg:max-w-sm">
@@ -400,7 +448,7 @@ export function PreviousChatbotsTab() {
             />
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ChatbotStatus | "all") }>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ChatbotStatus | "all")}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
@@ -430,8 +478,8 @@ export function PreviousChatbotsTab() {
           <CardHeader>
             <CardTitle>No chatbots {searchTerm || statusFilter !== "all" ? "found" : "yet"}</CardTitle>
             <CardDescription>
-              {searchTerm || statusFilter !== "all" 
-                ? "Try adjusting your filters" 
+              {searchTerm || statusFilter !== "all"
+                ? "Try adjusting your filters"
                 : "Create your first assistant to see it here"}
             </CardDescription>
           </CardHeader>
@@ -466,7 +514,8 @@ export function PreviousChatbotsTab() {
           <AlertDialogHeader className="space-y-3">
             <AlertDialogTitle className="text-xl">Delete chatbot?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete <span className="font-semibold text-foreground">"{deleteChatbot?.name}"</span> and all its data.
+              This action cannot be undone. This will permanently delete{" "}
+              <span className="font-semibold text-foreground">{deleteChatbot?.name}</span> and all its data.
             </AlertDialogDescription>
             <div className="space-y-2">
               <label htmlFor="confirm-name" className="text-sm font-medium text-foreground">
@@ -524,21 +573,20 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport }: ChatbotCar
   const datasetInfo = chatbot.dataset
   const embeddingInfo = chatbot.embedding
   const llmInfo = chatbot.llm
-  
+
   // Calculate metrics
   const totalChunks = datasetInfo?.files?.reduce((acc, f) => acc + (f.chunks || 0), 0) || 0
-  const testCount = chatbot.testHistory?.length || 0
-  
-  const createdDate = new Date(chatbot.createdAt).toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
+
+  const createdDate = new Date(chatbot.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
   })
-  
-  const updatedDate = new Date(chatbot.updatedAt).toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
+
+  const updatedDate = new Date(chatbot.updatedAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
   })
 
   return (
@@ -578,7 +626,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport }: ChatbotCar
             <Badge variant="secondary">{totalChunks.toLocaleString()} chunks</Badge>
           )}
         </div>
-        
+
         <div className="space-y-3">
           {/* LLM Provider and Model */}
           {llmInfo?.model && (
@@ -673,61 +721,61 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport }: ChatbotCar
 
 function StatusBadge({ status }: { status: ChatbotStatus }) {
   const label = status.charAt(0).toUpperCase() + status.slice(1)
-  
+
   if (status === "active") {
     return (
-      <Badge 
+      <Badge
         className="bg-green-50 text-green-700 border-green-600 hover:bg-green-100 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
       >
         {label}
       </Badge>
     )
   }
-  
+
   if (status === "inactive") {
     return (
-      <Badge 
+      <Badge
         className="bg-red-50 text-red-700 border-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
       >
         {label}
       </Badge>
     )
   }
-  
+
   return <Badge variant="outline">{label}</Badge>
 }
 
 // Helper functions to get provider logos
 function getEmbeddingLogo(model: string): string {
   const modelLower = model.toLowerCase()
-  
+
   // Check for HuggingFace
   if (modelLower.includes('hugging') || modelLower.includes('hf')) {
     return '/huggingface.svg'
   }
-  
+
   // Check for OpenAI
   if (modelLower.includes('openai') || modelLower.includes('text-embedding')) {
     return '/openai.svg'
   }
-  
+
   // Default fallback
   return '/openai.svg'
 }
 
 function getVectorStoreLogo(vectorStore: string): string {
   const storeLower = vectorStore.toLowerCase()
-  
+
   // Check for Pinecone
   if (storeLower.includes('pinecone')) {
     return '/pinecone.png'
   }
-  
+
   // Check for Chroma
   if (storeLower.includes('chroma')) {
     return '/chroma.png'
   }
-  
+
   // Default to chroma
   return '/chroma.png'
 }

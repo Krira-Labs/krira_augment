@@ -154,6 +154,16 @@ class RedisClient {
     
     return current;
   }
+
+  // Generic get
+  async get(key) {
+    return this.client.get(key);
+  }
+
+  // Generic set
+  async set(key, value) {
+    return this.client.set(key, value);
+  }
 }
 
 export const redisClient = new RedisClient();

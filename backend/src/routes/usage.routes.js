@@ -1,12 +1,12 @@
 import express from "express";
 
-import { startEmbedding } from "../controllers/embedding.controller.js";
+import { getUsageSummary } from "../controllers/usage.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post("/start", startEmbedding);
+router.get("/summary", getUsageSummary);
 
 export default router;

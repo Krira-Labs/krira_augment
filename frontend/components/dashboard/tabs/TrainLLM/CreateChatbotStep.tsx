@@ -14,6 +14,7 @@ type CreateChatbotStepProps = {
   setChatbotNameInput: (value: string) => void
   handleCreateChatbot: () => void
   isCreatingChatbot: boolean
+  isEditMode: boolean
 }
 
 export function CreateChatbotStep({
@@ -21,13 +22,18 @@ export function CreateChatbotStep({
   setChatbotNameInput,
   handleCreateChatbot,
   isCreatingChatbot,
+  isEditMode,
 }: CreateChatbotStepProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-10">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Name your Chatbot</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          {isEditMode ? "Rename and continue" : "Name your Chatbot"}
+        </h2>
         <p className="text-muted-foreground">
-          Give your AI assistant a unique identity to get started.
+          {isEditMode
+            ? "Update the chatbot name and continue configuring your pipeline."
+            : "Give your AI assistant a unique identity to get started."}
         </p>
       </div>
       <Card className="w-full max-w-md">
@@ -47,16 +53,18 @@ export function CreateChatbotStep({
                 }}
               />
             </div>
-            <Button 
-              className="w-full" 
-              onClick={handleCreateChatbot} 
+            <Button
+              className="w-full"
+              onClick={handleCreateChatbot}
               disabled={isCreatingChatbot || !chatbotNameInput.trim()}
             >
               {isCreatingChatbot ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  {isEditMode ? "Saving..." : "Creating..."}
                 </>
+              ) : isEditMode ? (
+                "Save & Continue"
               ) : (
                 "Create & Continue"
               )}

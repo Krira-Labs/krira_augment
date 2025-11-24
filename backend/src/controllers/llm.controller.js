@@ -4,6 +4,15 @@ import path from "path";
 
 import { ENV } from "../lib/env.js";
 import { SUPPORTED_EMBEDDING_MODELS, normalizeEmbeddingModel, resolveEmbeddingDimension } from "../lib/embeddingModels.js";
+import {
+  assertEmbeddingAccess,
+  assertModelAccess,
+  assertProviderAccess,
+  assertVectorStoreAccess,
+  filterModelsForPlan,
+  getPlanDefinition,
+} from "../lib/plan.js";
+import { consumeRequests, ensureRequestCapacity } from "../services/usage.service.js";
 
 const PROVIDER_METADATA = {
   openai: { label: "OpenAI", description: "GPT series via FastRouter" },
@@ -219,16 +228,31 @@ const handlePythonError = (error) => {
   return { status, message };
 };
 
-export const listLlmModels = async (_req, res) => {
+export const listLlmModels = async (req, res) => {
+  const plan = getPlanDefinition(req.user?.plan);
+  const applyPlanFilters = (providers) => {
+    let filtered = providers;
+    if (Array.isArray(plan.providers) && plan.providers.length > 0) {
+      filtered = filtered.filter((provider) => plan.providers.includes(provider.id));
+    }
+    return filtered.map((provider) => ({
+      ...provider,
+      models: filterModelsForPlan(req.user?.plan, provider.id, provider.models),
+    }));
+  };
+
   try {
     const baseUrl = getPythonBaseUrl();
     const response = await axios.get(`${baseUrl}/api/llm/models`, {
       timeout: 20000,
     });
     const merged = mergeProvidersWithEnvFallback(response.data);
+    merged.providers = applyPlanFilters(merged.providers);
     return res.status(200).json(merged);
   } catch (error) {
     const fallback = mergeProvidersWithEnvFallback(null);
+    fallback.providers = applyPlanFilters(fallback.providers);
+
     if (fallback.providers.some((provider) => provider.models.length > 0)) {
       return res.status(200).json(fallback);
     }
@@ -266,6 +290,21 @@ export const testLlmConfiguration = async (req, res) => {
     const requestedTopK = Number(body.topK);
     const datasetIds = Array.isArray(body.datasetIds) ? body.datasetIds : parseDatasetIds(body.datasetIds);
 
+    const vectorStore = typeof body.vectorStore === "string" ? body.vectorStore.trim() : "";
+
+    try {
+      assertProviderAccess(req.user?.plan, body.provider);
+      if (body.modelId) {
+        assertModelAccess(req.user?.plan, body.provider, body.modelId);
+      }
+      assertEmbeddingAccess(req.user?.plan, rawEmbeddingModel);
+      if (vectorStore) {
+        assertVectorStoreAccess(req.user?.plan, vectorStore);
+      }
+    } catch (accessError) {
+      return res.status(accessError.statusCode ?? 403).json({ message: accessError.message });
+    }
+
     const payload = {
       provider: body.provider,
       modelId: body.modelId,
@@ -273,7 +312,7 @@ export const testLlmConfiguration = async (req, res) => {
       question: body.question,
       embeddingModel,
       embeddingDimension: dimensionOutcome.value,
-      vectorStore: body.vectorStore,
+      vectorStore,
       datasetIds,
       topK: Number.isFinite(requestedTopK) ? requestedTopK : 30,
     };
@@ -283,6 +322,8 @@ export const testLlmConfiguration = async (req, res) => {
     }
 
     const response = await axios.post(`${baseUrl}/api/llm/test`, payload);
+
+    await consumeRequests(req.user, 1, { source: "llm_test", provider: body.provider, model: body.modelId });
 
     return res.status(200).json(response.data);
   } catch (error) {
@@ -304,7 +345,9 @@ export const runLlmEvaluation = async (req, res) => {
     let csvContent;
     try {
       const fileBuffer = await fs.promises.readFile(uploadedFile.path);
-      csvContent = fileBuffer.toString("base64");
+      const csvText = fileBuffer.toString("utf8");
+      csvContent = Buffer.from(csvText, "utf8").toString("base64");
+      req.fileRowCount = Math.max(csvText.split(/\r?\n/).filter((line) => line.trim().length > 0).length - 1, 1);
     } catch (error) {
       console.error("Failed to read uploaded evaluation CSV", error);
       return res.status(500).json({ message: "Unable to read evaluation CSV content" });
@@ -332,6 +375,15 @@ export const runLlmEvaluation = async (req, res) => {
     }
 
     const embeddingModel = normalizeEmbeddingModel(rawEmbeddingModel);
+
+    try {
+      assertProviderAccess(req.user?.plan, provider);
+      assertModelAccess(req.user?.plan, provider, modelId);
+      assertEmbeddingAccess(req.user?.plan, rawEmbeddingModel);
+      assertVectorStoreAccess(req.user?.plan, vectorStore);
+    } catch (accessError) {
+      return res.status(accessError.statusCode ?? 403).json({ message: accessError.message });
+    }
 
     if (datasetIdList.length === 0) {
       return res.status(400).json({ message: "At least one dataset must be selected for evaluation" });
@@ -369,12 +421,22 @@ export const runLlmEvaluation = async (req, res) => {
       evaluationPayload.pinecone = pineconePayload;
     }
 
+    const estimatedRows = req.fileRowCount ?? Math.max(datasetIdList.length, 1);
+
+    try {
+      ensureRequestCapacity(req.user, estimatedRows);
+    } catch (limitError) {
+      return res.status(limitError.statusCode ?? 402).json({ message: limitError.message });
+    }
+
     const baseUrl = getPythonBaseUrl();
     const response = await axios.post(`${baseUrl}/api/llm/evaluate`, evaluationPayload, {
       timeout: 600000,
     });
 
     fs.promises.unlink(uploadedFile.path).catch(() => null);
+
+    await consumeRequests(req.user, estimatedRows, { source: "evaluation", provider, model: modelId });
 
     return res.status(200).json(response.data);
   } catch (error) {

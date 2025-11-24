@@ -32,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { apiKeysService, ApiKeyRecord, CreateApiKeyPayload } from "@/lib/api/api-keys.service"
 import { chatbotService, Chatbot } from "@/lib/api/chatbot.service"
@@ -72,7 +73,10 @@ const formatRelative = (value?: string) => {
   return `${Math.floor(diff / 86_400_000)} days ago`
 }
 
-const CodeSnippet = ({ label, code }: { label: string; code: string }) => {
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+const CodeSnippet = ({ label, code, language }: { label: string; code: string; language: string }) => {
   const handleCopy = React.useCallback(async () => {
     await navigator.clipboard.writeText(code)
   }, [code])
@@ -85,9 +89,16 @@ const CodeSnippet = ({ label, code }: { label: string; code: string }) => {
           <Copy className="h-4 w-4" /> Copy
         </Button>
       </div>
-      <pre className="overflow-auto rounded-lg bg-muted p-4 text-sm">
-        <code>{code}</code>
-      </pre>
+      <div className="overflow-hidden rounded-lg">
+        <SyntaxHighlighter
+          language={language}
+          style={vscDarkPlus}
+          customStyle={{ margin: 0, borderRadius: '0.5rem', fontSize: '0.875rem' }}
+          wrapLongLines={true}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </div>
     </div>
   )
 }
@@ -189,15 +200,15 @@ export function ApiKeysTab() {
     "your-bot-name"
   const snippetKey = generatedKey ?? "sk-live-your-key"
   const snippetBotIdentifier = fallbackBotName.replace(/"/g, '\\"')
-  const curlSnippet = `curl -X POST ${PUBLIC_API_URL}/chat \
-  -H "Authorization: Bearer ${snippetKey}" \
-  -H "Content-Type: application/json" \
+  const curlSnippet = `curl -X POST ${PUBLIC_API_URL}/chat \\
+  -H "Authorization: Bearer ${snippetKey}" \\
+  -H "Content-Type: application/json" \\
   -d '{"bot_id": "${snippetBotIdentifier}", "query": "What is the status of my order?"}'`
 
   const pythonSnippet = `from kriralabs import Kriralabs\n\nclient = Kriralabs(api_key="${snippetKey}", bot_id="${snippetBotIdentifier}")\nresponse = client.ask("What is the status of my order?")\nprint(response.answer)`
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold">API Key Management</h2>
@@ -280,17 +291,60 @@ export function ApiKeysTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Integration examples</CardTitle>
-          <CardDescription>Use cURL or the official Python SDK. JavaScript SDK usage has been removed.</CardDescription>
+          <CardTitle>Integration Guide</CardTitle>
+          <CardDescription>Complete guide to integrate your chatbot into your applications.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <CodeSnippet label="cURL" code={curlSnippet} />
-          <CodeSnippet label="Python SDK" code={pythonSnippet} />
-          <p className="text-sm text-muted-foreground">
-            Install the SDK with <code className="rounded bg-muted px-1">pip install kriralabs</code>. Each request must include the
-            <code className="rounded bg-muted px-1">Authorization: Bearer &lt;api_key&gt;</code> header and you can set
-            <code className="rounded bg-muted px-1">bot_id</code> to either the chatbot&apos;s ID or its exact name (e.g., &quot;{fallbackBotName}&quot;).
-          </p>
+        <CardContent className="space-y-8">
+          {/* Step 1: Installation */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">1</div>
+              <h3 className="font-medium">Installation</h3>
+            </div>
+            <div className="pl-8">
+              <CodeSnippet label="Terminal" code="pip install kriralabs" language="bash" />
+            </div>
+          </div>
+
+          {/* Step 2: Configuration */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</div>
+              <h3 className="font-medium">Configuration</h3>
+            </div>
+            <div className="grid gap-4 pl-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Authorization Header</Label>
+                <CodeSnippet label="Header" code={`Authorization: Bearer ${snippetKey}`} language="bash" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Bot ID</Label>
+                <CodeSnippet label="ID" code={snippetBotIdentifier} language="text" />
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Usage */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">3</div>
+              <h3 className="font-medium">Usage Examples</h3>
+            </div>
+            <div className="pl-8">
+              <Tabs defaultValue="python" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="python">Python SDK</TabsTrigger>
+                  <TabsTrigger value="curl">cURL</TabsTrigger>
+                </TabsList>
+                <TabsContent value="python" className="mt-0">
+                  <CodeSnippet label="Python" code={pythonSnippet} language="python" />
+                </TabsContent>
+                <TabsContent value="curl" className="mt-0">
+                  <CodeSnippet label="cURL" code={curlSnippet} language="bash" />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

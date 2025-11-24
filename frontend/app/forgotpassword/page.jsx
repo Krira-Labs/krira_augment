@@ -7,12 +7,9 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { authService } from "@/lib/api/auth.service"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
 import { Loader2 } from "lucide-react"
 
 export default function ForgotPassword() {
-    const router = useRouter()
     const { toast } = useToast()
     const [email, setEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)

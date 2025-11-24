@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema(
     // Subscription Details
     plan: {
       type: String,
-      enum: ['free', 'pro_monthly', 'enterprise_monthly', 'annual_startup'],
+      enum: ['free', 'pro_monthly', 'enterprise_monthly', 'annual_startup', 'startup_monthly', 'scale_monthly', 'startup_annual'],
       default: 'free',
     },
     planPrice: {
@@ -96,7 +96,7 @@ const userSchema = new mongoose.Schema(
     // Usage Limits
     questionLimit: {
       type: Number,
-      default: 30,
+      default: 100,
     },
     questionsUsed: {
       type: Number,
@@ -111,6 +111,14 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
     teamMembers: {
+      type: Number,
+      default: 0,
+    },
+    storageLimitMb: {
+      type: Number,
+      default: 50,
+    },
+    storageUsedMb: {
       type: Number,
       default: 0,
     },
@@ -169,6 +177,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+    stripeCustomerId: {
+      type: String,
+    },
+    stripeSubscriptionId: {
+      type: String,
+    },
+    requestsResetAt: {
+      type: Date,
+    },
     resetPasswordToken: {
       type: String,
       select: false,
@@ -199,18 +216,20 @@ userSchema.pre('save', function (next) {
     const planConfig = PLAN_CONFIG[this.plan];
     
     if (planConfig) {
-      this.planPrice = planConfig.price;
+      const planPrice = planConfig.monthlyPrice ?? planConfig.price ?? 0;
+      this.planPrice = planPrice;
       this.chatbotLimit = planConfig.chatbotLimit;
       this.questionLimit = planConfig.questionLimit;
-      this.vectorStoreType = planConfig.vectorStore;
+      this.storageLimitMb = planConfig.storageLimitMb ?? this.storageLimitMb;
+      this.vectorStoreType = planConfig.vectorStore ?? planConfig.vectorStores?.[0] ?? 'chroma';
       this.supportType = planConfig.support;
       this.watermarkType = planConfig.watermark;
       this.analyticsEnabled = planConfig.analytics || false;
       this.earlyAccess = planConfig.earlyAccess || false;
       this.teamMembers = planConfig.teamMembers || 0;
       this.billingCycle = planConfig.billingCycle || 'monthly';
+      this.requestsResetAt = new Date();
       
-      // Generate API key for paid plans
       if (this.plan !== 'free' && !this.apiKey) {
         this.apiKey = this.generateApiKey();
       }

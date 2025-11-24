@@ -1,5 +1,3 @@
-import { ColorResult } from "react-color"
-
 export type DatasetType = "csv" | "json" | "website" | "pdf"
 
 export type DatasetPreview = {

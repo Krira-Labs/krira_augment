@@ -7,20 +7,8 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
 
 import { DeploymentOptions } from "./DeploymentOptions"
-import { ColorControl } from "./ColorControl"
-import { WidgetPreview } from "./WidgetPreview"
 import { AppearanceConfig, BehaviorConfig, BrandingConfig } from "./types"
 import { CODE_SNIPPETS } from "./constants"
 
@@ -39,85 +27,10 @@ type DeploymentSectionProps = {
 }
 
 export function DeploymentSection({
-  appearance,
-  setAppearance,
-  behavior,
-  setBehavior,
-  branding,
-  setBranding,
-  activeDevice,
-  onDeviceChange,
   deploymentTab,
   onDeploymentTabChange,
   codeSnippets,
 }: DeploymentSectionProps) {
-  const themePresets: Array<{
-    name: string
-    description: string
-    appearance: Partial<AppearanceConfig>
-  }> = [
-    {
-      name: "Krira Pro",
-      description: "Bright, confident default",
-      appearance: {
-        primary: "#2563eb",
-        accent: "#60a5fa",
-        background: "#ffffff",
-        text: "#0f172a",
-        button: "#1d4ed8",
-        borderRadius: 14,
-        bubbleSize: 14,
-        font: "Inter",
-        useGradient: true,
-      },
-    },
-    {
-      name: "Midnight",
-      description: "Dark UI with electric highlights",
-      appearance: {
-        primary: "#6366f1",
-        accent: "#22d3ee",
-        background: "#111827",
-        text: "#f9fafb",
-        button: "#4338ca",
-        borderRadius: 18,
-        bubbleSize: 16,
-        font: "Space Grotesk",
-        useGradient: true,
-      },
-    },
-    {
-      name: "Minimal",
-      description: "Soft neutrals and clean lines",
-      appearance: {
-        primary: "#0ea5e9",
-        accent: "#38bdf8",
-        background: "#f8fafc",
-        text: "#1f2937",
-        button: "#0284c7",
-        borderRadius: 12,
-        bubbleSize: 13,
-        font: "DM Sans",
-        useGradient: false,
-      },
-    },
-    {
-      name: "Aurora",
-      description: "Vibrant gradient-led branding",
-      appearance: {
-        primary: "#ec4899",
-        accent: "#8b5cf6",
-        background: "#0f172a",
-        text: "#f8fafc",
-        button: "#db2777",
-        borderRadius: 20,
-        bubbleSize: 15,
-        font: "Sora",
-        useGradient: true,
-      },
-    },
-  ]
-
   return (
     <Card>
       <CardHeader>

@@ -5,7 +5,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public message: string,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -57,9 +57,9 @@ class ApiClient {
       });
       clearTimeout(timeoutId);
       return response;
-    } catch (error: any) {
+    } catch (error) {
       clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new ApiError(408, 'Request timeout');
       }
       throw error;
@@ -77,8 +77,8 @@ class ApiClient {
     for (let attempt = 0; attempt <= retry; attempt++) {
       try {
         return await this.fetchWithTimeout(url, fetchOptions);
-      } catch (error: any) {
-        lastError = error;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown network error');
         if (attempt < retry) {
           await new Promise(resolve => 
             setTimeout(resolve, API_CONFIG.RETRY_DELAY * (attempt + 1))
@@ -87,7 +87,7 @@ class ApiClient {
       }
     }
 
-    throw lastError;
+    throw lastError ?? new Error('Unknown network error');
   }
 
   private onRefreshed(success: boolean) {
@@ -100,7 +100,7 @@ class ApiClient {
   }
 
   // Main request method
-  async request<T = any>(
+  async request<T = unknown>(
     endpoint: string,
     options: RequestConfig = {}
   ): Promise<T> {
@@ -108,7 +108,7 @@ class ApiClient {
     const accessToken = this.getAccessToken();
 
     const headers: Record<string, string> = {
-      ...(options.headers as Record<string, string>),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     // Only set Content-Type if it's not FormData (browser sets it with boundary for FormData)
@@ -135,15 +135,15 @@ class ApiClient {
           // Try to read error as json/text if possible
           const errorText = await response.text();
           let errorData;
-          try { errorData = JSON.parse(errorText); } catch (e) { errorData = { message: errorText }; }
+          try { errorData = JSON.parse(errorText); } catch { errorData = { message: errorText }; }
           throw new ApiError(response.status, errorData.message || 'An error occurred', errorData);
         }
-        return await response.blob() as any;
+        return (await response.blob()) as unknown as T;
       }
 
       // Handle different response types
       const contentType = response.headers.get('content-type');
-      let data;
+      let data: unknown;
 
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
@@ -153,15 +153,23 @@ class ApiClient {
 
       // Handle error responses
       if (!response.ok) {
+        let errorMessage = 'An error occurred';
+        if (typeof data === 'object' && data !== null && 'message' in data) {
+          const messageValue = (data as { message?: unknown }).message;
+          if (typeof messageValue === 'string') {
+            errorMessage = messageValue;
+          }
+        }
+
         throw new ApiError(
           response.status,
-          data.message || 'An error occurred',
+          errorMessage,
           data
         );
       }
 
-      return data;
-    } catch (error: any) {
+      return data as T;
+    } catch (error: unknown) {
       // Handle 401 Unauthorized (Token Expired or Missing)
       if (
         error instanceof ApiError && 
@@ -194,6 +202,10 @@ class ApiClient {
         } catch (refreshError) {
           this.isRefreshing = false;
           this.onRefreshed(false);
+          // Only log critical errors, not expected 401s during refresh (which just mean session expired)
+          if (!(refreshError instanceof ApiError) || refreshError.status !== 401) {
+            console.error('Token refresh failed:', refreshError);
+          }
           
           // Dispatch unauthorized event for AuthContext to handle logout
           if (typeof window !== 'undefined') {
@@ -211,22 +223,23 @@ class ApiClient {
         throw error;
       }
 
+      const fallbackMessage = error instanceof Error ? error.message : 'Network error occurred';
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        error.message || 'Network error occurred'
+        fallbackMessage
       );
     }
   }
 
   // GET request
-  async get<T = any>(endpoint: string, options?: RequestConfig): Promise<T> {
+  async get<T = unknown>(endpoint: string, options?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
   // POST request
-  async post<T = any>(
+  async post<T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestConfig
   ): Promise<T> {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
@@ -238,9 +251,9 @@ class ApiClient {
   }
 
   // PUT request
-  async put<T = any>(
+  async put<T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestConfig
   ): Promise<T> {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
@@ -252,9 +265,9 @@ class ApiClient {
   }
 
   // PATCH request
-  async patch<T = any>(
+  async patch<T = unknown>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     options?: RequestConfig
   ): Promise<T> {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
@@ -266,7 +279,7 @@ class ApiClient {
   }
 
   // DELETE request
-  async delete<T = any>(
+  async delete<T = unknown>(
     endpoint: string,
     options?: RequestConfig
   ): Promise<T> {

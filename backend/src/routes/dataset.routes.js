@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 
 import { uploadDataset } from "../controllers/dataset.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -39,6 +40,8 @@ const datasetFields = [
   { name: "pdfFiles", maxCount: 10 },
   { name: "dataset", maxCount: 1 },
 ];
+
+router.use(authMiddleware);
 
 router.post("/process", upload.fields(datasetFields), uploadDataset);
 

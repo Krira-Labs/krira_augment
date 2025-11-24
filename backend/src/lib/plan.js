@@ -1,48 +1,180 @@
-export const PLAN_CONFIG = {
+import MODEL_ACCESS from "../../../frontend/lib/model-access.json" assert { type: "json" };
+
+const NORMALIZED_MODEL_ACCESS = Object.entries(MODEL_ACCESS).reduce((acc, [provider, details]) => {
+  const free = Array.isArray(details.freeModels) ? details.freeModels.map((id) => id.toLowerCase()) : [];
+  const paid = Array.isArray(details.paidModels) ? details.paidModels.map((id) => id.toLowerCase()) : [];
+  acc[provider] = { free, paid };
+  return acc;
+}, {});
+
+const BASE_PLANS = {
   free: {
-    price: 0,
+    id: "free",
+    displayName: "Free",
+    badge: "Hobby",
+    description: "Best for hobby projects, prototypes, and testing the platform.",
+    currency: "usd",
+    monthlyPrice: 0,
     chatbotLimit: 1,
-    apiLimit: 0,
-    questionLimit: 30,
-    vectorStore: "chroma",
+    questionLimit: 100,
+    storageLimitMb: 50,
+    vectorStores: ["chroma"],
+    providers: ["openai", "google", "deepseek", "glm"],
+    embeddingModels: ["openai-small", "huggingface"],
+    analytics: true,
     support: "community",
     watermark: "powered-by-krira",
-    analytics: false,
-    earlyAccess: false,
+    features: [
+      "1 RAG pipeline",
+      "100 requests / month",
+      "Internal vector DB",
+      "Internal embedding model",
+      "Analytics dashboard",
+      "API access",
+      "Community / email support",
+    ],
+    billingCycle: "monthly",
+    isFree: true,
   },
-  pro_monthly: {
-    price: 35,
+  startup_monthly: {
+    id: "startup_monthly",
+    displayName: "Starter",
+    badge: "Best value",
+    description: "For teams that need managed infrastructure and higher limits.",
+    currency: "usd",
+    monthlyPrice: 49,
     chatbotLimit: 3,
-    apiLimit: 5000,
     questionLimit: 5000,
-    vectorStore: "pinecone",
+    storageLimitMb: 500,
+    vectorStores: ["chroma", "pinecone"],
+    providers: ["openai", "anthropic", "google", "perplexity", "grok", "deepseek", "glm"],
+    embeddingModels: ["openai-small", "openai-large", "huggingface"],
+    analytics: true,
     support: "priority-email",
     watermark: "custom",
-    analytics: true,
+    features: [
+      "3 RAG pipelines",
+      "5,000 requests / month",
+      "500 MB / pipeline storage",
+      "Bring your own vector store",
+      "Bring your own embedding model",
+      "Full analytics + API",
+      "Standard email support (24h)",
+    ],
+    billingCycle: "monthly",
+    isFree: false,
   },
-  enterprise_monthly: {
-    price: 135,
-    chatbotLimit: 8,
-    apiLimit: 40000,
-    questionLimit: 40000,
-    vectorStore: "pinecone",
-    support: "priority-24x7",
-    watermark: "custom",
-    analytics: true,
-    earlyAccess: true,
-    teamMembers: 5,
-  },
-  annual_startup: {
-    price: 1365,
-    chatbotLimit: 8,
-    apiLimit: 40000,
-    questionLimit: 40000,
-    vectorStore: "pinecone",
-    support: "priority-24x7",
-    watermark: "custom",
-    analytics: true,
-    earlyAccess: true,
-    teamMembers: 5,
-    billingCycle: "annual",
-  },
+};
+
+export const PLAN_CONFIG = BASE_PLANS;
+
+export const getPlanDefinition = (planId = "free") => {
+  return PLAN_CONFIG[planId] ?? PLAN_CONFIG.free;
+};
+
+export const isPaidPlan = (planId = "free") => {
+  return !getPlanDefinition(planId).isFree;
+};
+
+export const getPlanCatalog = () => {
+  return Object.values(PLAN_CONFIG).map((plan) => ({
+    id: plan.id,
+    name: plan.displayName,
+    description: plan.description,
+    badge: plan.badge,
+    monthlyPrice: plan.monthlyPrice,
+    annualPrice: plan.annualPrice ?? null,
+    currency: plan.currency,
+    features: plan.features,
+    comingSoon: Boolean(plan.comingSoon),
+    billingCycle: plan.billingCycle,
+    isFree: Boolean(plan.isFree),
+    requestLimit: plan.questionLimit,
+    pipelineLimit: plan.chatbotLimit,
+    storageLimitMb: plan.storageLimitMb,
+    providers: plan.providers,
+    vectorStores: plan.vectorStores,
+    embeddingModels: plan.embeddingModels,
+  }));
+};
+
+const getNormalizedModelId = (modelId = "") => modelId.trim().toLowerCase();
+
+const getFreeModelsForProvider = (provider) => {
+  const entry = NORMALIZED_MODEL_ACCESS[provider];
+  return entry ? entry.free : [];
+};
+
+export const filterModelsForPlan = (planId, provider, models = []) => {
+  const plan = getPlanDefinition(planId);
+  if (!plan.isFree) {
+    return models;
+  }
+
+  const allowed = getFreeModelsForProvider(provider);
+  if (allowed.length === 0) {
+    return models.filter((model) => {
+      const normalized = getNormalizedModelId(model.id);
+      const entry = NORMALIZED_MODEL_ACCESS[provider];
+      if (!entry) return true;
+      if (entry.paid.length === 0) return true;
+      return !entry.paid.includes(normalized);
+    });
+  }
+
+  return models.filter((model) => allowed.includes(getNormalizedModelId(model.id)));
+};
+
+export const assertProviderAccess = (planId, provider) => {
+  const plan = getPlanDefinition(planId);
+  if (plan.providers && !plan.providers.includes(provider)) {
+    const error = new Error(`Provider ${provider} is not available for your plan.`);
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+export const assertEmbeddingAccess = (planId, embeddingModel) => {
+  const plan = getPlanDefinition(planId);
+  if (plan.embeddingModels && !plan.embeddingModels.includes(embeddingModel)) {
+    const error = new Error(`Embedding model ${embeddingModel} requires a higher plan.`);
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+export const assertVectorStoreAccess = (planId, vectorStore) => {
+  const plan = getPlanDefinition(planId);
+  if (plan.vectorStores && !plan.vectorStores.includes(vectorStore)) {
+    const error = new Error(`Vector store ${vectorStore} is not available for your plan.`);
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+export const assertModelAccess = (planId, provider, modelId) => {
+  const plan = getPlanDefinition(planId);
+  if (!plan.isFree) {
+    return;
+  }
+
+  const allowed = getFreeModelsForProvider(provider);
+  if (allowed.length === 0) {
+    const entry = NORMALIZED_MODEL_ACCESS[provider];
+    if (!entry || entry.paid.length === 0) {
+      return;
+    }
+    if (entry.paid.includes(getNormalizedModelId(modelId))) {
+      const error = new Error(`Model ${modelId} requires a paid plan.`);
+      error.statusCode = 403;
+      throw error;
+    }
+    return;
+  }
+
+  if (!allowed.includes(getNormalizedModelId(modelId))) {
+    const error = new Error(`Model ${modelId} requires a paid plan.`);
+    error.statusCode = 403;
+    throw error;
+  }
 };

@@ -23,6 +23,11 @@ __pycache__/
 node_modules/
 .next/
 .cache/
+.docs/
+
+shared/
+
+test/
 
 # Environment
 .env.local

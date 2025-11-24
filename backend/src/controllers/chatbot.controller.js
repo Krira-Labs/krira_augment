@@ -1,19 +1,97 @@
 import { Chatbot } from "../models/chatbot.model.js";
+import User from "../models/auth.model.js";
 import { encryptApiKey, decryptApiKey } from "../lib/crypto.js";
+import { redisClient } from "../utils/redis.js";
+import { getPlanDefinition } from "../lib/plan.js";
+
+const buildActivePipelineFilter = (userId) => ({
+    userId,
+    $or: [{ isCompleted: true }, { isCompleted: { $exists: false } }],
+});
+
+const ensureLegacyCompletionState = async (chatbot) => {
+    if (chatbot && typeof chatbot.isCompleted !== "boolean") {
+        chatbot.isCompleted = true;
+        chatbot.status = chatbot.status ?? "active";
+        chatbot.completedAt = chatbot.completedAt ?? chatbot.updatedAt ?? new Date();
+        await chatbot.save();
+    }
+    return chatbot;
+};
 
 export const createChatbot = async (req, res) => {
     try {
         const { name } = req.body;
-        if (!name) {
+        const trimmedName = typeof name === "string" ? name.trim() : "";
+        if (!trimmedName) {
             return res.status(400).json({ message: "Chatbot name is required" });
+        }
+
+        const userId = req.user._id;
+        
+        // Check if a chatbot with the same name already exists
+        const existingChatbot = await Chatbot.findOne({ userId, name: trimmedName });
+        if (existingChatbot) {
+            // Resume existing chatbot
+            // Ensure legacy state if needed
+            await ensureLegacyCompletionState(existingChatbot);
+            
+            // If we need to decrypt keys for the frontend
+            const chatbotObj = existingChatbot.toObject();
+            const pineconeKey = chatbotObj?.embedding?.pineconeConfig?.apiKey;
+            if (pineconeKey) {
+                try {
+                    chatbotObj.embedding.pineconeConfig.apiKey = decryptApiKey(pineconeKey) ?? null;
+                } catch (decryptError) {
+                    chatbotObj.embedding.pineconeConfig.apiKey = null;
+                }
+            }
+            
+            // Return 200 OK to indicate retrieval/resume rather than creation
+            return res.status(200).json(chatbotObj);
+        }
+
+        // Check limits before creating new one
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
+
+        // Count ALL chatbots (completed or draft) for the limit check
+        const totalCount = await Chatbot.countDocuments({ userId });
+        const planLimit = req.user?.chatbotLimit ?? getPlanDefinition(req.user?.plan).chatbotLimit ?? 1;
+
+        if (totalCount >= planLimit) {
+            return res.status(403).json({
+                message: "Pipeline limit reached. You cannot create more chatbots.",
+            });
         }
 
         const chatbot = new Chatbot({
             userId: req.user._id,
-            name,
+            name: trimmedName,
+            status: "draft",
+            isCompleted: false,
         });
 
         await chatbot.save();
+
+        if (Array.isArray(user.chatbots)) {
+            const exists = user.chatbots.some((botId) => botId.toString() === chatbot._id.toString());
+            if (!exists) {
+                user.chatbots.push(chatbot._id);
+            }
+        } else {
+            user.chatbots = [chatbot._id];
+        }
+        
+        // Update chatbotsCreated count to reflect total pipelines (draft + active)
+        // This ensures the user profile matches the strict limit logic
+        user.chatbotsCreated = await Chatbot.countDocuments({ userId });
+        
+        await user.save();
+        await redisClient.cacheUser(user._id.toString(), user);
+
         res.status(201).json(chatbot);
     } catch (error) {
         console.error("Error creating chatbot:", error);
@@ -30,14 +108,21 @@ export const getChatbot = async (req, res) => {
             return res.status(404).json({ message: "Chatbot not found" });
         }
 
+        await ensureLegacyCompletionState(chatbot);
+        const chatbotObj = chatbot.toObject();
+
         // Decrypt Pinecone API key before sending to frontend
-        if (chatbot.embedding?.pineconeConfig?.apiKey) {
-            const chatbotObj = chatbot.toObject();
-            chatbotObj.embedding.pineconeConfig.apiKey = decryptApiKey(chatbot.embedding.pineconeConfig.apiKey);
-            return res.status(200).json(chatbotObj);
+        const pineconeKey = chatbotObj?.embedding?.pineconeConfig?.apiKey;
+        if (pineconeKey) {
+            try {
+                chatbotObj.embedding.pineconeConfig.apiKey = decryptApiKey(pineconeKey) ?? null;
+            } catch (decryptError) {
+                console.error("Failed to decrypt Pinecone API key:", decryptError);
+                chatbotObj.embedding.pineconeConfig.apiKey = null;
+            }
         }
 
-        res.status(200).json(chatbot);
+        res.status(200).json(chatbotObj);
     } catch (error) {
         console.error("Error fetching chatbot:", error);
         res.status(500).json({ message: "Failed to fetch chatbot", error: error.message });
@@ -99,6 +184,62 @@ export const updateChatbot = async (req, res) => {
     } catch (error) {
         console.error("Error updating chatbot:", error);
         res.status(500).json({ message: "Failed to update chatbot", error: error.message });
+    }
+};
+
+export const completeChatbot = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+
+        const chatbot = await Chatbot.findOne({ _id: id, userId });
+        if (!chatbot) {
+            return res.status(404).json({ message: "Chatbot not found" });
+        }
+
+        if (typeof chatbot.isCompleted !== "boolean") {
+            await ensureLegacyCompletionState(chatbot);
+            return res.status(200).json(chatbot);
+        }
+
+        if (chatbot.isCompleted) {
+            return res.status(200).json(chatbot);
+        }
+
+        const activeCount = await Chatbot.countDocuments(buildActivePipelineFilter(userId));
+        const planLimit = req.user?.chatbotLimit ?? getPlanDefinition(req.user?.plan).chatbotLimit ?? 1;
+
+        if (activeCount >= planLimit) {
+            return res.status(403).json({
+                message: "Pipeline limit reached. Delete an existing chatbot or upgrade your plan to add more.",
+            });
+        }
+
+        chatbot.isCompleted = true;
+        chatbot.status = "active";
+        chatbot.completedAt = new Date();
+        await chatbot.save();
+
+        const user = await User.findById(userId);
+        if (user) {
+            const totalActive = await Chatbot.countDocuments(buildActivePipelineFilter(userId));
+            user.chatbotsCreated = totalActive;
+            if (Array.isArray(user.chatbots)) {
+                const exists = user.chatbots.some((botId) => botId.toString() === chatbot._id.toString());
+                if (!exists) {
+                    user.chatbots.push(chatbot._id);
+                }
+            } else {
+                user.chatbots = [chatbot._id];
+            }
+            await user.save();
+            await redisClient.cacheUser(user._id.toString(), user);
+        }
+
+        return res.status(200).json(chatbot);
+    } catch (error) {
+        console.error("Error completing chatbot:", error);
+        return res.status(500).json({ message: "Failed to finalize chatbot", error: error.message });
     }
 };
 
@@ -171,6 +312,15 @@ export const deleteChatbot = async (req, res) => {
                 success: false,
                 message: "Chatbot not found"
             });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (user) {
+            user.chatbots = (user.chatbots ?? []).filter((botId) => botId.toString() !== chatbot._id.toString());
+            const activeCount = await Chatbot.countDocuments(buildActivePipelineFilter(user._id));
+            user.chatbotsCreated = activeCount;
+            await user.save();
+            await redisClient.cacheUser(user._id.toString(), user);
         }
 
         res.status(200).json({

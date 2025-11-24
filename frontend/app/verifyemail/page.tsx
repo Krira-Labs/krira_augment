@@ -78,10 +78,11 @@ export default function VerifyEmail() {
                 // Redirect to dashboard
                 router.push('/dashboard')
             }
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid OTP"
             toast({
                 title: "Verification Failed",
-                description: error.message || "Invalid OTP",
+                description: message,
                 variant: "destructive",
             })
         } finally {

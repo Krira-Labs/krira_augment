@@ -50,7 +50,7 @@ const markdownComponents: MarkdownComponents = {
       </div>
     )
   },
-  code: ({ inline, className, children, ...props }: any) => {
+  code: ({ inline, className, children, ...props }: React.ComponentPropsWithoutRef<"code"> & { inline?: boolean }) => {
     if (inline) {
       return (
         <code className={cn("rounded bg-muted px-1 py-0.5 font-mono text-[12px]", className)} {...props}>

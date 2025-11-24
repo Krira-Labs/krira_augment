@@ -99,7 +99,7 @@ const DASHBOARD_TABS: DashboardTab[] = [
   },
 ]
 
-type UserProfile = ProfileResponse["user"]
+type UserProfile = NonNullable<ProfileResponse["user"]>
 
 function formatPlanLabel(plan?: string) {
   if (!plan) return "Unknown"
@@ -123,11 +123,9 @@ function formatRole(role?: string) {
 }
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUser, isLoading: isAuthLoading } = useAuth()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = React.useState<string>(DASHBOARD_TABS[0].value)
-  const [profile, setProfile] = React.useState<UserProfile | null>(null)
-  const [isProfileLoading, setIsProfileLoading] = React.useState(false)
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
   const openProfileTab = React.useCallback(() => setActiveTab("account-profile"), [setActiveTab])
   const openBillingTab = React.useCallback(() => setActiveTab("account-billing"), [setActiveTab])
@@ -146,56 +144,24 @@ export default function DashboardLayout() {
     }
   }, [searchParams])
 
+  // Listen for subscription changes to trigger immediate UI refresh
   React.useEffect(() => {
-    let isMounted = true
-
-    const loadProfile = async () => {
-      if (!user) {
-        if (isMounted) {
-          setProfile(null)
-          setIsProfileLoading(false)
-        }
-        return
-      }
-
-      if (isMounted) {
-        setIsProfileLoading(true)
-      }
-
+    const handleSubscriptionChange = async () => {
+      console.log('🔄 Subscription changed, refreshing user context...')
       try {
-        const response = await authService.getProfile()
-        if (isMounted && response.success && response.user) {
-          setProfile(response.user)
-        }
-      } catch (error: unknown) {
-        if (isMounted) {
-          const status =
-            typeof error === "object" && error !== null && "status" in error
-              ? (error as { status?: number }).status
-              : undefined
-          const message = error instanceof Error ? error.message : undefined
-
-          if (status !== 401) {
-            toast({
-              title: "Unable to load account data",
-              description: message ?? "Please try again."
-            })
-          }
-          setProfile(null)
-        }
-      } finally {
-        if (isMounted) {
-          setIsProfileLoading(false)
-        }
+        await refreshUser()
+      } catch (error) {
+        console.error('Failed to refresh user after subscription change:', error)
       }
     }
 
-    loadProfile()
+    // Listen for custom subscription change events
+    window.addEventListener('subscription:changed', handleSubscriptionChange)
 
     return () => {
-      isMounted = false
+      window.removeEventListener('subscription:changed', handleSubscriptionChange)
     }
-  }, [user, toast])
+  }, [refreshUser])
 
   const handleLogout = React.useCallback(async () => {
     setIsLoggingOut(true)
@@ -212,10 +178,10 @@ export default function DashboardLayout() {
     }
   }, [logout, toast])
 
-  const displayName = profile?.name ?? user?.name ?? "User"
-  const displayEmail = profile?.email ?? user?.email ?? ""
-  const displayRole = formatRole(profile?.role ?? user?.role)
-  const planLabel = formatPlanLabel(profile?.plan ?? user?.plan)
+  const displayName = user?.name ?? "User"
+  const displayEmail = user?.email ?? ""
+  const displayRole = formatRole(user?.role)
+  const planLabel = formatPlanLabel(user?.plan)
   const initials = React.useMemo(() => getInitials(displayName), [displayName])
 
   const activeConfig = React.useMemo(
@@ -232,7 +198,7 @@ export default function DashboardLayout() {
         displayEmail={displayEmail}
         displayRole={displayRole}
         planLabel={planLabel}
-        isLoadingPlan={isProfileLoading}
+        isLoadingPlan={isAuthLoading}
         initials={initials}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
@@ -246,7 +212,7 @@ export default function DashboardLayout() {
             displayEmail={displayEmail}
             displayRole={displayRole}
             planLabel={planLabel}
-            isLoadingPlan={isProfileLoading}
+            isLoadingPlan={isAuthLoading}
             initials={initials}
             onLogout={handleLogout}
             isLoggingOut={isLoggingOut}
@@ -270,7 +236,7 @@ export default function DashboardLayout() {
                   </TabsTrigger>
                 ))}
               </TabsList> */}
-              
+
               {DASHBOARD_TABS.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value} className="space-y-6">
                   {tab.component}

@@ -1,5 +1,6 @@
-import { apiClient } from './client';
+import { apiClient, ApiError } from './client';
 import { API_ENDPOINTS } from './config';
+import type { Chatbot } from './chatbot.service';
 
 // Type definitions
 export interface SignupData {
@@ -51,7 +52,7 @@ export interface AuthResponse {
 
 export interface ProfileResponse {
   success: boolean;
-  user: {
+  user?: {
     id: string;
     name: string;
     email: string;
@@ -77,7 +78,7 @@ export interface ProfileResponse {
     earlyAccess: boolean;
     vectorStoreType: string;
     systemPrompt: string;
-    chatbots: any[];
+    chatbots: Chatbot[];
     lastLogin: string;
     createdAt: string;
     updatedAt: string;
@@ -168,14 +169,28 @@ class AuthService {
    * Get user profile
    */
   async getProfile(): Promise<ProfileResponse> {
-    return apiClient.get<ProfileResponse>(API_ENDPOINTS.AUTH.PROFILE);
+    try {
+      return await apiClient.get<ProfileResponse>(API_ENDPOINTS.AUTH.PROFILE);
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+        return { success: false };
+      }
+      throw error;
+    }
   }
 
   /**
    * Get admin profile
    */
   async getAdminProfile(): Promise<ProfileResponse> {
-    return apiClient.get<ProfileResponse>(API_ENDPOINTS.AUTH.ADMIN_PROFILE);
+    try {
+      return await apiClient.get<ProfileResponse>(API_ENDPOINTS.AUTH.ADMIN_PROFILE);
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+        return { success: false };
+      }
+      throw error;
+    }
   }
 
   /**
@@ -187,7 +202,7 @@ class AuthService {
     try {
       const response = await this.getProfile();
       return response.success && !!response.user;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

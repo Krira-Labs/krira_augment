@@ -9,6 +9,7 @@ import {
   runLlmEvaluation,
   testLlmConfiguration,
 } from "../controllers/llm.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -51,6 +52,8 @@ const evaluationUpload = multer({
     callback(null, true);
   },
 });
+
+router.use(authMiddleware);
 
 router.get("/models", listLlmModels);
 router.post("/test", testLlmConfiguration);

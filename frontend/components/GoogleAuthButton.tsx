@@ -63,12 +63,12 @@ export default function GoogleAuthButton({ mode, onSuccess }: GoogleAuthButtonPr
         // Redirect to dashboard
         router.push('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Google auth error:', error);
-      
+      const message = error instanceof Error ? error.message : undefined;
       toast({
         title: mode === 'signup' ? "Signup Failed" : "Login Failed",
-        description: error.message || `Failed to ${mode === 'signup' ? 'sign up' : 'sign in'} with Google`,
+        description: message || `Failed to ${mode === 'signup' ? 'sign up' : 'sign in'} with Google`,
         variant: "destructive",
       });
     } finally {
