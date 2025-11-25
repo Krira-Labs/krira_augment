@@ -786,7 +786,8 @@ export const profile = async (req, res) => {
     });
     if ((user.chatbotsCreated ?? 0) !== activePipelineCount) {
       user.chatbotsCreated = activePipelineCount;
-      await user.save();
+      // Use findByIdAndUpdate since user from cache is a plain object, not a Mongoose document
+      await User.findByIdAndUpdate(userId, { chatbotsCreated: activePipelineCount });
       await redisClient.cacheUser(userId.toString(), user);
     }
 
