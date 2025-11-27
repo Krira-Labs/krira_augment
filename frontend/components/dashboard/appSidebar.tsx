@@ -51,28 +51,30 @@ type SidebarItem = {
 
 const NAVIGATION_ITEMS: SidebarItem[] = [
   {
-    value: "train-llm",
-    label: "RAG Pipeline",
-    icon: Brain,
-    description: "Configure training workflows",
-  },
-  {
-    value: "playground",
-    label: "Playground",
-    icon: MessageCircle,
-    description: "Chat with your chatbots",
-  },
-  {
     value: "usage-analytics",
     label: "Usage & Analytics",
     icon: BarChart3,
     description: "Track performance metrics",
   },
   {
+    value: "train-llm",
+    label: "RAG Pipeline",
+    icon: Brain,
+    description: "Configure training workflows",
+  },
+ 
+  
+  {
     value: "previous-chatbots",
     label: "Previous Chatbots",
     icon: MessageSquare,
     description: "Manage deployed assistants",
+  },
+   {
+    value: "playground",
+    label: "Playground",
+    icon: MessageCircle,
+    description: "Chat with your chatbots",
   },
   {
     value: "api-keys",
