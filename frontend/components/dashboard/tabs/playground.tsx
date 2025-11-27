@@ -45,6 +45,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { chatbotService, type Chatbot } from "@/lib/api/chatbot.service"
+import { playgroundService } from "@/lib/api/playground.service"
+import { ApiError } from "@/lib/api/client"
 import { cn } from "@/lib/utils"
 
 type ChatMessage = {
@@ -280,23 +282,11 @@ export function PlaygroundTab() {
     setIsLoading(true)
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/api"
-      const response = await fetch(`${backendUrl}/playground/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Include cookies for cross-origin auth
-        body: JSON.stringify({
-          chatbotId: selectedChatbot._id,
-          message: userMessage.content,
-          sessionId: activeSession.id,
-        }),
+      const data = await playgroundService.chat({
+        chatbotId: selectedChatbot._id,
+        message: userMessage.content,
+        sessionId: activeSession.id,
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to get response")
-      }
 
       const assistantMessage: ChatMessage = {
         id: generateId(),
@@ -327,7 +317,12 @@ export function PlaygroundTab() {
       })
     } catch (error) {
       console.error("Chat error:", error)
-      const errorMessage = error instanceof Error ? error.message : "Failed to get a response"
+      const errorMessage =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to get a response"
       toast({
         title: "Error",
         description: errorMessage,
