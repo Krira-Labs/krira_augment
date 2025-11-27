@@ -280,9 +280,11 @@ export function PlaygroundTab() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/playground/chat", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/api"
+      const response = await fetch(`${backendUrl}/playground/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for cross-origin auth
         body: JSON.stringify({
           chatbotId: selectedChatbot._id,
           message: userMessage.content,
