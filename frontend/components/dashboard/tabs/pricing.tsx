@@ -36,7 +36,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
 
 type PlanCard = PlanSummary & { highlight?: boolean }
 
@@ -674,25 +673,6 @@ export function PricingTab() {
           </div>
         </motion.div>
 
-        {loading && (
-          <div className="flex justify-center">
-            <div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
-              {Array.from({ length: 2 }).map((_, idx) => (
-                <Card key={idx} className="p-6">
-                  <Skeleton className="h-6 w-24" />
-                  <Skeleton className="mt-4 h-8 w-32" />
-                  <div className="mt-6 space-y-3">
-                    {Array.from({ length: 4 }).map((__, innerIdx) => (
-                      <Skeleton key={innerIdx} className="h-4 w-full" />
-                    ))}
-                  </div>
-                  <Skeleton className="mt-6 h-10 w-full" />
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
         <motion.div variants={itemVariants} className="flex justify-center">
           <div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
             {displayedPlans.map(renderPlanCard)}
@@ -844,21 +824,6 @@ export function PricingTab() {
           ))}
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <Card className="border-primary/40 bg-primary/5">
-            <CardHeader>
-              <CardTitle>Stripe-secured checkout</CardTitle>
-              <CardDescription>Payments are encrypted end-to-end. We never store card details.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" /> Fully PCI compliant
-              <div className="h-4 w-px bg-border" />
-              <Check className="h-4 w-4 text-emerald-500" /> Cancel anytime from the dashboard
-              <div className="h-4 w-px bg-border" />
-              <Sparkle className="h-4 w-4 text-primary" /> React confetti celebrates successful upgrades 🎉
-            </CardContent>
-          </Card>
-        </motion.div>
       </motion.div>
 
     </>

@@ -61,6 +61,39 @@ async def _verify_api_key(
     raise HTTPException(status_code=response.status_code, detail=detail or "API key verification failed")
 
 
+async def _track_usage(
+    *,
+    api_key: str,
+    bot_id: str,
+    settings: Settings,
+    tokens: int = 0,
+) -> None:
+    """Track usage for SDK API calls."""
+    if not settings.service_api_secret:
+        return  # Skip tracking if not configured
+
+    # Build the track-usage URL from the verification URL
+    base_url = settings.api_verification_url.rsplit("/", 1)[0]
+    track_url = f"{base_url}/track-usage"
+    
+    payload = {"apiKey": api_key, "botId": bot_id, "tokens": tokens}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            response = await client.post(
+                track_url,
+                json=payload,
+                headers={"x-service-key": settings.service_api_secret},
+            )
+            if response.status_code == 402:
+                # User has exceeded their limit
+                data = response.json()
+                raise HTTPException(status_code=402, detail=data.get("message", "Request limit reached"))
+        except httpx.RequestError:
+            # Don't fail the request if usage tracking fails
+            pass
+
+
 def _extract_bearer_token(authorization: str | None) -> str:
     if not authorization:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Authorization header")
@@ -105,6 +138,15 @@ async def chat_with_bot(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     latency_ms = int((time.perf_counter() - start) * 1000)
+    
+    # Track usage after successful chat
+    await _track_usage(
+        api_key=api_key,
+        bot_id=payload.bot_id,
+        settings=settings,
+        tokens=0,  # TODO: Get actual token count from chat_result if available
+    )
+    
     return ChatResponse(
         bot_id=payload.bot_id,
         answer=chat_result["answer"],

@@ -76,7 +76,7 @@ export function LLMConfiguration({
   llmModels,
   allowedProviders,
   isPaidPlan,
- }: LLMConfigurationProps) {
+}: LLMConfigurationProps) {
   const activeProvider = LLM_PROVIDERS.find((item) => item.value === provider) ?? LLM_PROVIDERS[0]
   const handleProviderChange = (value: string) => {
     if (!allowedProviders.includes(value)) return
@@ -155,7 +155,7 @@ export function LLMConfiguration({
                   {disabled && (
                     <p className="text-[10px] font-medium text-rose-500">Upgrade plan to unlock</p>
                   )}
-                  
+
                 </div>
               </Label>
             )
@@ -166,8 +166,9 @@ export function LLMConfiguration({
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle className="text-base">Select a {activeProvider.label} model</CardTitle>
+              <CardDescription>Choose the AI model that will power your assistant</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Select
                 value={model}
                 onValueChange={setModel}
@@ -196,7 +197,7 @@ export function LLMConfiguration({
                   ))}
                 </SelectContent>
               </Select>
-              
+
               {isModelLoading && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -211,6 +212,32 @@ export function LLMConfiguration({
                 </p>
               )}
               {modelError && <p className="text-xs text-destructive">{modelError}</p>}
+
+              {/* Selected model info */}
+              {model && !isModelLoading && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={activeProvider.logo}
+                      alt={`${activeProvider.label} logo`}
+                      width={20}
+                      height={20}
+                      className="h-5 w-5"
+                    />
+                    <span className="text-sm font-medium">{models.find(m => m.id === model)?.label || model}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This model will be used to generate responses based on your knowledge base and system prompt.
+                  </p>
+                </div>
+              )}
+
+              {/* Available models count */}
+              {!isModelLoading && models.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {models.length} model{models.length !== 1 ? 's' : ''} available from {activeProvider.label}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -219,7 +246,7 @@ export function LLMConfiguration({
               <CardTitle className="text-base">Chunks to Retrieve (Top K)</CardTitle>
               <CardDescription>How many relevant chunks to fetch from your dataset (1-100)</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="chunks-to-retrieve">Top K</Label>
                 <Input
@@ -232,8 +259,51 @@ export function LLMConfiguration({
                   }}
                   className="w-40"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Higher values may capture more comprehensive information, but can add noise. Default is 30.
+              </div>
+
+              {/* Recommendation hints */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">Recommended values:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setChunksToRetrieve(10)}
+                    className={cn(
+                      "rounded-md border px-2 py-1.5 text-xs transition-colors",
+                      chunksToRetrieve === 10
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    10 - Fast
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChunksToRetrieve(30)}
+                    className={cn(
+                      "rounded-md border px-2 py-1.5 text-xs transition-colors",
+                      chunksToRetrieve === 30
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    30 - Balanced
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChunksToRetrieve(50)}
+                    className={cn(
+                      "rounded-md border px-2 py-1.5 text-xs transition-colors",
+                      chunksToRetrieve === 50
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    50 - Deep
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Higher values provide more context but may add noise.
                 </p>
               </div>
             </CardContent>
@@ -247,18 +317,27 @@ export function LLMConfiguration({
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-3">
-              <Select value={selectedPromptHistory} onValueChange={onPromptHistoryChange}>
-                <SelectTrigger className="w-full sm:w-60">
-                  <SelectValue placeholder="Load saved prompt" />
-                </SelectTrigger>
-                <SelectContent>
-                  {promptHistory.map((prompt) => (
-                    <SelectItem key={prompt} value={prompt}>
-                      {prompt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {promptHistory.length > 0 && (
+                <Select value={selectedPromptHistory} onValueChange={onPromptHistoryChange}>
+                  <SelectTrigger className="w-full sm:w-60">
+                    <SelectValue placeholder="Load saved prompt" />
+                  </SelectTrigger>
+                  <SelectContent className="max-w-[400px]">
+                    {promptHistory.map((prompt) => (
+                      <SelectItem
+                        key={prompt}
+                        value={prompt}
+                        className="cursor-pointer"
+                        title={prompt}
+                      >
+                        <span className="block truncate max-w-[350px]">
+                          {prompt.length > 50 ? `${prompt.slice(0, 50)}...` : prompt}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Button onClick={onPromptSave} className="gap-2">
                 <Sparkles className="h-4 w-4" /> Save prompt
               </Button>
@@ -318,7 +397,7 @@ export function LLMConfiguration({
                       )}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-xs text-muted-foreground max-h-[460px] overflow-auto pr-2">
+                  <CardContent className="space-y-3 text-xs text-muted-foreground max-h-[460px] overflow-auto pr-2" data-lenis-prevent>
                     {displayedChunks.length > 0 ? (
                       <>
                         {displayedChunks.map((chunk, index) => {
@@ -359,7 +438,7 @@ export function LLMConfiguration({
                     <CardHeader>
                       <CardTitle className="text-sm">AI Response</CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-0 max-h-[460px] overflow-auto pr-2">
+                    <CardContent className="pt-0 max-h-[460px] overflow-auto pr-2" data-lenis-prevent>
                       <AiResponsePanel content={testResponse} />
                     </CardContent>
                   </Card>

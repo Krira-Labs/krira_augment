@@ -28,11 +28,13 @@ export function CreateChatbotStep({
     <div className="flex flex-col items-center justify-center space-y-6 py-10">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold tracking-tight">
-          {isEditMode ? "Rename and continue" : "Name your Chatbot"}
+          {isEditMode 
+            ? `Continue with "${chatbotNameInput}"` 
+            : "Name your Chatbot"}
         </h2>
         <p className="text-muted-foreground">
           {isEditMode
-            ? "Update the chatbot name and continue configuring your pipeline."
+            ? "Continue configuring your AI assistant pipeline."
             : "Give your AI assistant a unique identity to get started."}
         </p>
       </div>

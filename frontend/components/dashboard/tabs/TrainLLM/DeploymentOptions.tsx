@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { KeyRound } from "lucide-react"
+import { KeyRound, MessageCircle } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { coy as syntaxTheme } from "react-syntax-highlighter/dist/esm/styles/prism"
@@ -22,14 +22,32 @@ type DeploymentOptionsProps = {
   deploymentTab: string
   onDeploymentTabChange: (tab: string) => void
   codeSnippets: typeof CODE_SNIPPETS
+  botName?: string
+  chatbotId?: string
 }
 
-export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSnippets }: DeploymentOptionsProps) {
+export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSnippets, botName, chatbotId }: DeploymentOptionsProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const snippetEntries = React.useMemo(() => Object.entries(codeSnippets), [codeSnippets])
+  // Replace placeholder bot_id with actual bot name
+  const dynamicSnippets = React.useMemo(() => {
+    const safeBotName = botName?.trim() || "your-bot-name"
+    const formattedBotId = safeBotName.toLowerCase().replace(/\s+/g, "-")
+    
+    return Object.fromEntries(
+      Object.entries(codeSnippets).map(([key, snippet]) => [
+        key,
+        {
+          ...snippet,
+          code: snippet.code.replace(/support-pro-bot/g, formattedBotId)
+        }
+      ])
+    ) as typeof codeSnippets
+  }, [codeSnippets, botName])
+
+  const snippetEntries = React.useMemo(() => Object.entries(dynamicSnippets), [dynamicSnippets])
   const availableTabs = React.useMemo(() => snippetEntries.map(([key]) => key), [snippetEntries])
   const activeTab = availableTabs.includes(deploymentTab) ? deploymentTab : availableTabs[0] ?? ""
 
@@ -39,6 +57,14 @@ export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSn
     const query = params.toString()
     router.push(query ? `${pathname}?${query}` : `${pathname}?tab=api-keys`)
   }, [router, pathname, searchParams])
+
+  const handleNavigateToPlayground = React.useCallback(() => {
+    if (chatbotId) {
+      router.push(`/dashboard?tab=playground&chatbotId=${chatbotId}`)
+    } else {
+      router.push("/dashboard?tab=playground")
+    }
+  }, [router, chatbotId])
 
   return (
     <Card className="border-dashed">
@@ -57,28 +83,57 @@ export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSn
           </TabsList>
           {snippetEntries.map(([key, snippet]) => (
             <TabsContent key={key} value={key}>
-              <div className="relative rounded-md border bg-slate-950/90">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-2 text-white/80"
-                  onClick={() => navigator.clipboard.writeText(snippet.code)}
-                >
-                  Copy
-                </Button>
-                <SyntaxHighlighter
-                  language={snippet.language}
-                  style={syntaxTheme}
-                  customStyle={{ background: "transparent", padding: "1rem", margin: 0, fontSize: "0.85rem" }}
-                >
-                  {snippet.code}
-                </SyntaxHighlighter>
+              <div className="relative rounded-lg border border-border overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/50">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {snippet.language}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => navigator.clipboard.writeText(snippet.code)}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <div className="bg-slate-950 dark:bg-slate-900">
+                  <SyntaxHighlighter
+                    language={snippet.language}
+                    style={syntaxTheme}
+                    showLineNumbers={true}
+                    lineNumberStyle={{
+                      minWidth: "2.5em",
+                      paddingRight: "1em",
+                      color: "#64748b",
+                      marginRight: "1em",
+                      userSelect: "none"
+                    }}
+                    customStyle={{ 
+                      background: "transparent", 
+                      padding: "1rem 0.5rem", 
+                      margin: 0, 
+                      fontSize: "0.8rem",
+                      lineHeight: "1.7",
+                      overflow: "visible",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word"
+                    }}
+                    wrapLines={true}
+                    wrapLongLines={true}
+                  >
+                    {snippet.code}
+                  </SyntaxHighlighter>
+                </div>
               </div>
             </TabsContent>
           ))}
         </Tabs>
-        <div>
-          <Button className="gap-2" onClick={handleNavigateToApiTab}>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="default" className="gap-2" onClick={handleNavigateToPlayground}>
+            <MessageCircle className="h-4 w-4" /> Try in Playground
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={handleNavigateToApiTab}>
             <KeyRound className="h-4 w-4" /> Create API key
           </Button>
         </div>

@@ -14,15 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+
 
 import { EvaluationMetrics, EvaluationRow, MetricJustifications } from "./types"
 import { MetricCard } from "./MetricCard"
@@ -73,10 +65,14 @@ export function EvaluationSection({
   ]
 
   const formatScore = (value?: number | null) => (typeof value === "number" ? `${value.toFixed(1)}%` : "—")
-  const verdictVariant = (verdict: EvaluationRow["verdict"]) => {
-    if (verdict === "correct") return "secondary" as const
-    if (verdict === "partial") return "outline" as const
-    return "destructive" as const
+  const getVerdictStyles = (verdict: EvaluationRow["verdict"]) => {
+    if (verdict === "correct") {
+      return "border-primary/30 bg-primary/5 text-primary"
+    }
+    if (verdict === "partial") {
+      return "border-muted-foreground/30 bg-muted/50 text-muted-foreground"
+    }
+    return "border-destructive/30 bg-destructive/5 text-destructive"
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -167,26 +163,20 @@ export function EvaluationSection({
                   {isEvaluating && <Loader2 className="h-4 w-4 animate-spin" />}
                   {isEvaluating ? "Evaluating" : "Run evaluation"}
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  We generate answers with your selected LLM and score them using GPT-5 via FastRouter.
-                </p>
               </div>
             </CardContent>
           </Card>
 
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {metricSpecs.map((spec, index) => (
-                <div
+          <div className="space-y-3">
+            {/* All 7 cards in a responsive grid */}
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+              {metricSpecs.map((spec) => (
+                <MetricCard
                   key={spec.key}
-                  className={metricSpecs.length === 7 && index === 6 ? "sm:col-span-2 lg:col-span-1 lg:col-start-2" : ""}
-                >
-                  <MetricCard
-                    title={spec.title}
-                    value={metrics ? metrics[spec.key] : null}
-                    justification={justifications?.[spec.key]}
-                  />
-                </div>
+                  title={spec.title}
+                  value={metrics ? metrics[spec.key] : null}
+                  justification={justifications?.[spec.key]}
+                />
               ))}
             </div>
           </div>
@@ -248,7 +238,7 @@ export function EvaluationSection({
                   : "Run an evaluation to populate question-by-question metrics."}
               </p>
             </div>
-            {hasResults && <Badge variant="outline">{rows.length} rows</Badge>}
+            {hasResults && <Badge variant="outline">{rows.length} evaluations</Badge>}
           </div>
 
           {!hasResults ? (
@@ -258,66 +248,90 @@ export function EvaluationSection({
               </p>
             </div>
           ) : (
-            <div className="w-full overflow-hidden rounded-lg border">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[200px]">Question</TableHead>
-                      <TableHead className="min-w-[200px]">Model Answer</TableHead>
-                      <TableHead className="min-w-[180px]">Expected Answer</TableHead>
-                      <TableHead className="min-w-[100px]">LLM Score</TableHead>
-                      <TableHead className="min-w-[90px]">Semantic</TableHead>
-                      <TableHead className="min-w-[100px]">Faithfulness</TableHead>
-                      <TableHead className="min-w-[110px]">Answer Rel.</TableHead>
-                      <TableHead className="min-w-[90px]">Precision</TableHead>
-                      <TableHead className="min-w-[80px]">Recall</TableHead>
-                      <TableHead className="min-w-[80px] text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.map((row) => (
-                      <TableRow key={row.questionNumber}>
-                        <TableCell className="align-top text-sm">
-                          <div className="flex flex-wrap items-center gap-2 text-xs uppercase text-muted-foreground">
-                            <Badge variant="outline">#{row.questionNumber}</Badge>
-                            <Badge variant={verdictVariant(row.verdict)} className="font-normal capitalize">
-                              {row.verdict}
-                            </Badge>
-                          </div>
-                          <p className="mt-2 font-medium text-foreground line-clamp-2">{row.question}</p>
-                          {row.contextSnippets.length > 0 && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {row.contextSnippets.length} context snippet{row.contextSnippets.length === 1 ? "" : "s"}
-                            </p>
+            <div className="space-y-3">
+              {rows.map((row) => (
+                <Card 
+                  key={row.questionNumber} 
+                  className="border hover:border-primary/30 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex flex-col gap-4">
+                      {/* Header row with question number, verdict, and action */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-xs">#{row.questionNumber}</Badge>
+                          <Badge variant="outline" className={cn("font-normal capitalize text-xs border", getVerdictStyles(row.verdict))}>
+                            {row.verdict}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Score: {formatScore(row.llmScore)}
+                          </Badge>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => onSelectResult(row)}>
+                          View Details
+                        </Button>
+                      </div>
+                      
+                      {/* Question */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Question</p>
+                        <p className="text-sm font-medium text-foreground">{row.question}</p>
+                        {row.contextSnippets.length > 0 && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {row.contextSnippets.length} context snippet{row.contextSnippets.length === 1 ? "" : "s"} used
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Answers grid */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="rounded-md bg-muted/30 p-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Model Answer</p>
+                          <p className="text-sm leading-relaxed line-clamp-3">{row.modelAnswer}</p>
+                          {row.notes && (
+                            <p className="mt-2 text-xs text-muted-foreground italic">Note: {row.notes}</p>
                           )}
-                        </TableCell>
-                        <TableCell className="align-top text-sm leading-relaxed max-w-xs">
-                          <div className="line-clamp-3">{row.modelAnswer}</div>
-                          {row.notes && <p className="mt-2 text-xs text-muted-foreground">LLM notes: {row.notes}</p>}
-                        </TableCell>
-                        <TableCell className="align-top text-sm text-muted-foreground leading-relaxed max-w-xs">
-                          <div className="line-clamp-3">{row.expectedAnswer}</div>
-                        </TableCell>
-                        <TableCell className="align-top whitespace-nowrap">
-                          <Badge variant="secondary">{formatScore(row.llmScore)}</Badge>
-                        </TableCell>
-                        <TableCell className="align-top text-sm whitespace-nowrap">{formatScore(row.semanticScore)}</TableCell>
-                        <TableCell className="align-top text-sm whitespace-nowrap">{formatScore(row.faithfulness)}</TableCell>
-                        <TableCell className="align-top text-sm whitespace-nowrap">{formatScore(row.answerRelevancy)}</TableCell>
-                        <TableCell className="align-top text-sm whitespace-nowrap">{formatScore(row.contentPrecision)}</TableCell>
-                        <TableCell className="align-top text-sm whitespace-nowrap">{formatScore(row.contextRecall)}</TableCell>
-                        <TableCell className="align-top text-right">
-                          <Button variant="ghost" size="sm" onClick={() => onSelectResult(row)}>
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                  <TableCaption className="text-xs">Updated automatically after each evaluation run.</TableCaption>
-                </Table>
-              </div>
+                        </div>
+                        <div className="rounded-md bg-muted/30 p-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Expected Answer</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{row.expectedAnswer}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Metrics row */}
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        <div className="rounded-md bg-secondary/50 p-2 text-center">
+                          <p className="text-[10px] text-muted-foreground">Semantic</p>
+                          <p className="text-xs font-semibold">{formatScore(row.semanticScore)}</p>
+                        </div>
+                        <div className="rounded-md bg-secondary/50 p-2 text-center">
+                          <p className="text-[10px] text-muted-foreground">Faithfulness</p>
+                          <p className="text-xs font-semibold">{formatScore(row.faithfulness)}</p>
+                        </div>
+                        <div className="rounded-md bg-secondary/50 p-2 text-center">
+                          <p className="text-[10px] text-muted-foreground">Relevancy</p>
+                          <p className="text-xs font-semibold">{formatScore(row.answerRelevancy)}</p>
+                        </div>
+                        <div className="rounded-md bg-secondary/50 p-2 text-center">
+                          <p className="text-[10px] text-muted-foreground">Precision</p>
+                          <p className="text-xs font-semibold">{formatScore(row.contentPrecision)}</p>
+                        </div>
+                        <div className="rounded-md bg-secondary/50 p-2 text-center">
+                          <p className="text-[10px] text-muted-foreground">Recall</p>
+                          <p className="text-xs font-semibold">{formatScore(row.contextRecall)}</p>
+                        </div>
+                        <div className="rounded-md bg-primary/10 p-2 text-center">
+                          <p className="text-[10px] text-primary">LLM Score</p>
+                          <p className="text-xs font-semibold text-primary">{formatScore(row.llmScore)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <p className="text-xs text-center text-muted-foreground">
+                Updated automatically after each evaluation run.
+              </p>
             </div>
           )}
         </div>

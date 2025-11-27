@@ -2,7 +2,9 @@ import crypto from "crypto";
 
 import { ApiKey } from "../models/apiKey.model.js";
 import { Chatbot } from "../models/chatbot.model.js";
+import User from "../models/auth.model.js";
 import { decryptApiKey } from "../lib/crypto.js";
+import { consumeRequests, ensureRequestCapacity } from "../services/usage.service.js";
 
 const ALLOWED_PERMISSIONS = new Set(["chat", "manage"]);
 
@@ -251,5 +253,59 @@ export const verifyApiKey = async (req, res) => {
   } catch (error) {
     console.error("Failed to verify API key", error);
     return res.status(500).json({ message: "Unable to verify API key" });
+  }
+};
+
+/**
+ * Track usage for API key requests (called by Python backend after successful chat)
+ */
+export const trackApiKeyUsage = async (req, res) => {
+  try {
+    const { apiKey, botId, tokens } = req.body ?? {};
+
+    if (!apiKey || !botId) {
+      return res.status(400).json({ message: "apiKey and botId are required" });
+    }
+
+    const keyHash = hashApiKey(apiKey);
+    const key = await ApiKey.findOne({ keyHash });
+
+    if (!key || key.status !== "active") {
+      return res.status(401).json({ message: "Invalid API key" });
+    }
+
+    // Find the user who owns this API key
+    const user = await User.findById(key.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Track usage
+    try {
+      await consumeRequests(user, 1, { 
+        source: 'sdk', 
+        botId,
+        tokens: tokens || 0 
+      });
+      console.log('Usage tracked for SDK request:', { userId: user._id, botId });
+    } catch (usageError) {
+      if (usageError.statusCode === 402) {
+        return res.status(402).json({ 
+          success: false, 
+          message: usageError.message 
+        });
+      }
+      console.error('Failed to track usage:', usageError);
+    }
+
+    return res.json({ 
+      success: true, 
+      message: "Usage tracked successfully",
+      questionsUsed: user.questionsUsed,
+      questionLimit: user.questionLimit,
+    });
+  } catch (error) {
+    console.error("Failed to track API key usage", error);
+    return res.status(500).json({ message: "Unable to track usage" });
   }
 };

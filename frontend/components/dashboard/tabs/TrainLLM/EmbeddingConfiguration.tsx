@@ -122,6 +122,13 @@ export function EmbeddingConfiguration({
                     <p className="text-xs font-medium text-rose-500">Upgrade to unlock this embedding model.</p>
                   )}
                 </div>
+                {selectedModel === model.id && (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span>
@@ -136,14 +143,6 @@ export function EmbeddingConfiguration({
             )
           })}
         </RadioGroup>
-
-        <Alert className="border-primary/40 bg-primary/5">
-          <AlertTitle>{currentModel.name}</AlertTitle>
-          <AlertDescription className="space-y-1 text-sm">
-            <p>{currentModel.useCases}</p>
-            <p className="text-muted-foreground">{currentModel.notes}</p>
-          </AlertDescription>
-        </Alert>
 
         {Array.isArray(currentModel.dimensionOptions) && currentModel.dimensionOptions.length > 1 && (
           <div className="space-y-2">
@@ -217,6 +216,13 @@ export function EmbeddingConfiguration({
                         <p className="text-xs font-medium text-rose-500">Available on paid plans.</p>
                       )}
                     </div>
+                    {vectorStore === option.value && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                 </Label>
                 )
@@ -250,21 +256,7 @@ export function EmbeddingConfiguration({
               </Alert>
             )}
 
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={onTestConnection}>
-                {vectorStore === "pinecone" ? "Test connection" : "Check readiness"}
-              </Button>
-              {connectionStatus === "success" && (
-                <Badge className="border border-emerald-200 bg-emerald-100 text-emerald-700">
-                  Ready
-                </Badge>
-              )}
-              {connectionStatus === "error" && (
-                <Badge className="border border-rose-200 bg-rose-100 text-rose-700">
-                  Action required
-                </Badge>
-              )}
-            </div>
+
           </CardContent>
         </Card>
 

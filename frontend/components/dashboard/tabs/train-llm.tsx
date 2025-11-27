@@ -135,12 +135,9 @@ export function TrainLLMTab() {
   const [systemPrompt, setSystemPrompt] = React.useState(
     "You are Krira AI, a friendly assistant that helps product teams train and deploy chatbots."
   )
-  const [promptHistory, setPromptHistory] = React.useState<string[]>([
-    "Default onboarding assistant",
-    "Sales enablement specialist",
-    "Developer documentation guide",
-  ])
+  const [promptHistory, setPromptHistory] = React.useState<string[]>([])
   const [selectedPromptHistory, setSelectedPromptHistory] = React.useState<string>("")
+  const [isSavingDraft, setIsSavingDraft] = React.useState(false)
   const [testQuestion, setTestQuestion] = React.useState("")
   const [testResponse, setTestResponse] = React.useState<string | null>(null)
   const [testContext, setTestContext] = React.useState<RetrievedContextEntry[]>([])
@@ -1219,11 +1216,39 @@ export function TrainLLMTab() {
     setTestContext([])
   }
 
-  const handlePromptSave = () => {
-    if (selectedPromptHistory) return
-    setPromptHistory((prev) => Array.from(new Set([systemPrompt, ...prev])).slice(0, 5))
-    toast({ title: "Prompt saved" })
-  }
+  const handlePromptSave = React.useCallback(async () => {
+    if (!systemPrompt.trim()) {
+      toast({ title: "Empty prompt", description: "Please enter a system prompt before saving." })
+      return
+    }
+    
+    // Add to local history (keep max 5 unique prompts)
+    setPromptHistory((prev) => {
+      const newHistory = Array.from(new Set([systemPrompt.trim(), ...prev])).slice(0, 5)
+      return newHistory
+    })
+    setSelectedPromptHistory(systemPrompt.trim())
+    
+    // Save to backend if chatbot exists
+    if (chatbotId) {
+      try {
+        await updateChatbotState({
+          llm: {
+            provider,
+            model,
+            topK: chunksToRetrieve,
+            systemPrompt: systemPrompt.trim()
+          }
+        })
+        toast({ title: "Prompt saved", description: "Your system prompt has been saved." })
+      } catch (error) {
+        console.error("Failed to save prompt:", error)
+        toast({ title: "Prompt saved locally", description: "Saved to session. Backend sync failed." })
+      }
+    } else {
+      toast({ title: "Prompt saved", description: "Saved to current session." })
+    }
+  }, [chatbotId, chunksToRetrieve, model, provider, systemPrompt, toast, updateChatbotState])
 
   const handlePromptHistorySelect = (value: string) => {
     setSelectedPromptHistory(value)
@@ -1596,8 +1621,118 @@ export function TrainLLMTab() {
     setActiveStep(stepIndex)
   }, [canJumpFreely, maxUnlockedStep, toast])
 
-  const handleSaveDraft = () =>
-    toast({ title: "Draft saved", description: "We'll keep your configuration ready for the next session." })
+  const handleSaveDraft = React.useCallback(async () => {
+    if (!chatbotId) {
+      toast({ title: "No chatbot", description: "Create a chatbot first before saving a draft." })
+      return
+    }
+
+    setIsSavingDraft(true)
+    
+    try {
+      // Build the update payload based on current step
+      const updatePayload: UpdateChatbotData = {}
+
+      // Always save the name
+      if (chatbotNameInput.trim()) {
+        updatePayload.name = chatbotNameInput.trim()
+      }
+
+      // Save dataset info if we have previews
+      const successfulPreviews = previewResults.filter((r) => r.status === "success" && r.data)
+      if (successfulPreviews.length > 0) {
+        const currentFileUploads = fileUploads[datasetType as FileDatasetType] || []
+        updatePayload.dataset = {
+          type: datasetType,
+          files: successfulPreviews
+            .filter(p => p.source !== "website")
+            .map(p => {
+              const matchingFile = currentFileUploads.find(fu => fu.id === p.id)
+              return {
+                datasetId: p.id,
+                name: p.label,
+                size: matchingFile ? matchingFile.file.size : 0,
+                chunks: p.data?.total_chunks || 0,
+              }
+            }),
+          urls: successfulPreviews
+            .filter(p => p.source === "website")
+            .map(p => p.label),
+        }
+      }
+
+      // Save embedding info
+      if (embeddingSummary) {
+        updatePayload.embedding = {
+          model: selectedModel,
+          dimension: modelDimensions[selectedModel],
+          vectorStore: vectorStore,
+          pineconeConfig: vectorStore === "pinecone" ? {
+            indexName: indexName
+          } : undefined,
+          stats: {
+            chunksProcessed: embeddingSummary.results.reduce((acc, r) => acc + r.chunks_processed, 0),
+            chunksEmbedded: embeddingSummary.results.reduce((acc, r) => acc + r.chunks_embedded, 0)
+          },
+          datasetIds: embeddingSummary.results.map((result) => result.dataset_id),
+          datasets: embeddingSummary.results.map((result) => ({
+            id: result.dataset_id,
+            label: result.label,
+            chunksEmbedded: result.chunks_embedded,
+            chunksProcessed: result.chunks_processed,
+          })),
+          isEmbedded: true
+        }
+      }
+
+      // Save LLM config
+      if (model) {
+        updatePayload.llm = {
+          provider,
+          model,
+          topK: chunksToRetrieve,
+          systemPrompt
+        }
+      }
+
+      // Save evaluation if exists
+      if (evaluationMetrics) {
+        updatePayload.evaluation = {
+          metrics: evaluationMetrics,
+          rows: evaluationRows,
+          justifications: evaluationJustifications
+        }
+      }
+
+      await chatbotService.updateChatbot(chatbotId, updatePayload)
+      toast({ title: "Draft saved", description: "Your progress has been saved successfully." })
+    } catch (error) {
+      console.error("Failed to save draft:", error)
+      const message = error instanceof ApiError ? error.message : "Failed to save draft"
+      toast({ title: "Save failed", description: message })
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }, [
+    chatbotId,
+    chatbotNameInput,
+    chunksToRetrieve,
+    datasetType,
+    embeddingSummary,
+    evaluationJustifications,
+    evaluationMetrics,
+    evaluationRows,
+    fileUploads,
+    indexName,
+    model,
+    modelDimensions,
+    previewResults,
+    provider,
+    selectedModel,
+    systemPrompt,
+    toast,
+    vectorStore
+  ])
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -1640,12 +1775,17 @@ export function TrainLLMTab() {
               />
             </section>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleSaveDraft}>
-                Save draft
+              <Button variant="outline" onClick={handleBack}>
+                Back to Chatbot
               </Button>
-              <Button onClick={handleNext}>
-                Next: Configure Embedding
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleSaveDraft}>
+                  Save draft
+                </Button>
+                <Button onClick={handleNext}>
+                  Next: Configure Embedding
+                </Button>
+              </div>
             </div>
           </div>
         )
@@ -1790,6 +1930,8 @@ export function TrainLLMTab() {
               deploymentTab={deploymentTab}
               onDeploymentTabChange={setDeploymentTab}
               codeSnippets={CODE_SNIPPETS}
+              botName={chatbotNameInput}
+              chatbotId={chatbotId || undefined}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button variant="outline" onClick={handleBack}>

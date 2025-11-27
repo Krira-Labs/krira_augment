@@ -1,6 +1,6 @@
 import express from "express";
 
-import { createApiKey, listApiKeys, revokeApiKey, verifyApiKey } from "../controllers/apiKey.controller.js";
+import { createApiKey, listApiKeys, revokeApiKey, verifyApiKey, trackApiKeyUsage } from "../controllers/apiKey.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { serviceAuthMiddleware } from "../middlewares/serviceAuth.middleware.js";
 
@@ -11,5 +11,6 @@ router.post("/", authMiddleware, createApiKey);
 router.delete("/:keyId", authMiddleware, revokeApiKey);
 
 router.post("/verify", serviceAuthMiddleware, verifyApiKey);
+router.post("/track-usage", serviceAuthMiddleware, trackApiKeyUsage);
 
 export default router;

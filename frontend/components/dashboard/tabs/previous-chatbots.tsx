@@ -12,6 +12,7 @@ import {
   Search,
   Trash2,
   Download,
+  MessageCircle,
 } from "lucide-react"
 
 import {
@@ -140,6 +141,11 @@ export function PreviousChatbotsTab() {
   const handleEditChatbot = (chatbot: Chatbot) => {
     // Navigate to train-llm tab with chatbot ID as query parameter
     router.push(`/dashboard?tab=train-llm&editId=${chatbot._id}`)
+  }
+
+  const handlePlayground = (chatbot: Chatbot) => {
+    // Navigate to playground tab with chatbot ID
+    router.push(`/dashboard?tab=playground&chatbotId=${chatbot._id}`)
   }
 
   const handleExportDetails = (chatbot: Chatbot) => {
@@ -499,6 +505,7 @@ export function PreviousChatbotsTab() {
               onEdit={() => handleEditChatbot(bot)}
               onDelete={() => setDeleteChatbot(bot)}
               onExport={() => handleExportDetails(bot)}
+              onPlayground={() => handlePlayground(bot)}
             />
           ))}
         </div>
@@ -567,9 +574,10 @@ type ChatbotCardProps = {
   onEdit: () => void
   onDelete: () => void
   onExport: () => void
+  onPlayground: () => void
 }
 
-function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport }: ChatbotCardProps) {
+function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground }: ChatbotCardProps) {
   const datasetInfo = chatbot.dataset
   const embeddingInfo = chatbot.embedding
   const llmInfo = chatbot.llm
@@ -706,13 +714,21 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport }: ChatbotCar
           )}
         </div>
       </CardContent>
-      <CardFooter className="mt-auto flex items-center justify-between gap-3">
-        <Button variant="outline" size="sm" className="gap-2" onClick={onEdit}>
-          <Edit2 className="h-4 w-4" />
-          Edit
-        </Button>
+      <CardFooter className="mt-auto flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={onEdit}>
+            <Edit2 className="h-4 w-4" />
+            Edit
+          </Button>
+          {status === "active" && (
+            <Button variant="default" size="sm" className="gap-2" onClick={onPlayground}>
+              <MessageCircle className="h-4 w-4" />
+              Playground
+            </Button>
+          )}
+        </div>
         <Button variant="ghost" size="sm" className="gap-2" onClick={onExport}>
-          <Download className="h-4 w-4" /> Export Details
+          <Download className="h-4 w-4" /> Export
         </Button>
       </CardFooter>
     </Card>

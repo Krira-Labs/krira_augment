@@ -61,4 +61,5 @@ export const ENV = {
 
     NODE_ENV: process.env.NODE_ENV,
     PYTHON_BACKEND_URL: process.env.PYTHON_BACKEND_URL,
+    PYTHON_BACKEND_URL_HOSTED: process.env.PYTHON_BACKEND_URL_HOSTED,
 }

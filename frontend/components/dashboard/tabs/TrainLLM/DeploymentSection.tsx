@@ -24,12 +24,16 @@ type DeploymentSectionProps = {
   deploymentTab: string
   onDeploymentTabChange: (tab: string) => void
   codeSnippets: typeof CODE_SNIPPETS
+  botName?: string
+  chatbotId?: string
 }
 
 export function DeploymentSection({
   deploymentTab,
   onDeploymentTabChange,
   codeSnippets,
+  botName,
+  chatbotId,
 }: DeploymentSectionProps) {
   return (
     <Card>
@@ -315,6 +319,8 @@ export function DeploymentSection({
           deploymentTab={deploymentTab}
           onDeploymentTabChange={onDeploymentTabChange}
           codeSnippets={codeSnippets}
+          botName={botName}
+          chatbotId={chatbotId}
         />
       </CardContent>
     </Card>

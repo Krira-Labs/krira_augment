@@ -22,8 +22,8 @@ export function DetailDialog({ result, onOpenChange }: DetailDialogProps) {
   const formatScore = (value?: number | null) => (typeof value === "number" ? `${value.toFixed(1)}%` : "—")
 
   return (
-    <Dialog open={!!result} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+    <Dialog open={!!result} onOpenChange={onOpenChange} modal={true}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col" data-lenis-prevent>
         <DialogHeader className="shrink-0">
           <DialogTitle>Evaluation detail</DialogTitle>
           <DialogDescription>

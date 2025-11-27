@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
-import { BellIcon, Loader2, LogOut } from "lucide-react"
+import { BellIcon, Loader2, LogOut, Settings, User, CreditCard, Sparkles, ChevronRight } from "lucide-react"
 
 import { AppSidebar } from "./appSidebar"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
@@ -23,12 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { authService, ProfileResponse } from "@/lib/api/auth.service"
 import { useToast } from "@/components/ui/use-toast"
 
 import { TrainLLMTab } from "./tabs/train-llm"
+import { PlaygroundTab } from "./tabs/playground"
 import { UsageAnalyticsTab } from "./tabs/usage-analytics"
 import { PreviousChatbotsTab } from "./tabs/previous-chatbots"
 import { ApiKeysTab } from "./tabs/api-keys"
@@ -51,6 +53,12 @@ const DASHBOARD_TABS: DashboardTab[] = [
     label: "RAG Pipeline",
     description: "Create Complete RAG pipelines with ease",
     component: <TrainLLMTab />,
+  },
+  {
+    value: "playground",
+    label: "Playground",
+    description: "Chat and interact with your deployed chatbots",
+    component: <PlaygroundTab />,
   },
   {
     value: "usage-analytics",
@@ -282,67 +290,96 @@ function DashboardHeader({
   onOpenSettings,
 }: DashboardHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-between gap-4 px-6 py-4">
+    <header className="sticky top-0 z-20 border-b border-border/50 bg-gradient-to-r from-background via-background to-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <div className="flex items-center justify-between gap-4 px-6 py-3">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <SidebarTrigger className="hidden md:inline-flex" />
-            <span className="font-medium text-foreground">{activeLabel}</span>
+          <SidebarTrigger className="hidden md:inline-flex h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors [&_svg]:text-muted-foreground [&_svg]:hover:text-foreground" />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-semibold text-foreground">{activeLabel}</span>
+            </div>
+            <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground/50" />
+            <p className="hidden md:block text-sm text-muted-foreground max-w-md truncate">
+              {activeDescription}
+            </p>
           </div>
-          <Separator orientation="vertical" className="hidden h-6 md:block" />
-          <p className="hidden md:block text-sm text-muted-foreground">
-            {activeDescription}
-          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge className="hidden sm:inline-flex" variant="outline">
+        <div className="flex items-center gap-3">
+          <Badge 
+            className={cn(
+              "hidden sm:inline-flex gap-1.5 px-3 py-1 rounded-full transition-colors",
+              "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
+            )}
+            variant="outline"
+          >
             {isLoadingPlan ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Loading plan...
+                <span className="text-xs">Loading...</span>
               </span>
             ) : (
-              <>Current Plan: {planLabel}</>
+              <>
+                <Sparkles className="h-3 w-3" />
+                <span className="text-xs font-semibold">{planLabel}</span>
+              </>
             )}
           </Badge>
-          <Button variant="ghost" size="icon" className="relative">
-            <BellIcon className="h-5 w-5" />
-            <span className="bg-destructive absolute right-1 top-1 flex h-2 w-2 rounded-full" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative h-9 w-9 rounded-full hover:bg-muted hover:text-foreground transition-colors text-muted-foreground"
+          >
+            <BellIcon className="h-4 w-4" />
+            <span className="bg-primary absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full ring-2 ring-background" />
           </Button>
+          <Separator orientation="vertical" className="h-6 bg-border/50" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex h-10 items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:text-primary hover:bg-muted data-[state=open]:bg-muted"
+                className="flex h-9 items-center gap-2.5 rounded-full px-2 pr-3 transition-all hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:ring-1 data-[state=open]:ring-border"
               >
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-7 w-7 ring-2 ring-primary/20">
                   <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col items-start">
-                  <span className="text-sm font-medium">{displayName}</span>
-                  <span className="text-muted-foreground text-xs">{displayEmail || displayRole}</span>
+                  <span className="text-sm font-medium leading-tight text-foreground">{displayName}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">{displayName}</span>
+            <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl" sideOffset={8}>
+              <div className="flex items-center gap-3 px-2 py-3 rounded-lg bg-muted/50 mb-2">
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                  <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-semibold truncate">{displayName}</span>
                   {(displayEmail || displayRole) && (
-                    <span className="text-xs text-muted-foreground">{displayEmail || displayRole}</span>
+                    <span className="text-xs text-muted-foreground truncate">{displayEmail || displayRole}</span>
                   )}
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onOpenProfile}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenBilling}>Billing</DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenSettings}>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
+              </div>
+              <DropdownMenuItem onSelect={onOpenProfile} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onOpenBilling} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span>Billing</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onOpenSettings} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-2" />
               <DropdownMenuItem
-                className="text-destructive"
+                className="gap-2 py-2.5 rounded-lg cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                 onSelect={(event) => {
                   event.preventDefault()
                   if (!isLoggingOut) {
@@ -352,11 +389,11 @@ function DashboardHeader({
                 disabled={isLoggingOut}
               >
                 {isLoggingOut ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="h-4 w-4" />
                 )}
-                {isLoggingOut ? "Signing out..." : "Sign out"}
+                <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

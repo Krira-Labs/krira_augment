@@ -4,7 +4,6 @@ import { InfoIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Card,
-  CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
@@ -26,54 +25,94 @@ export function MetricCard({ title, value, justification }: MetricCardProps) {
   const normalized = hasValue ? Math.min(Math.max(value, 0), 100) : 0
   const displayValue = hasValue ? `${value.toFixed(1)}%` : "—"
 
-  // Standard colors for each metric type - not based on score
-  const colorMap: Record<string, { bg: string; border: string; text: string; accent: string; progress: string }> = {
-    "Accuracy": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", accent: "bg-blue-100", progress: "bg-blue-500" },
-    "Evaluation Score": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", accent: "bg-purple-100", progress: "bg-purple-500" },
-    "Semantic Accuracy": { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", accent: "bg-emerald-100", progress: "bg-emerald-500" },
-    "Faithfulness": { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", accent: "bg-amber-100", progress: "bg-amber-500" },
-    "Answer Relevancy": { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", accent: "bg-rose-100", progress: "bg-rose-500" },
-    "Content Precision": { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", accent: "bg-cyan-100", progress: "bg-cyan-500" },
-    "Context Recall": { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", accent: "bg-indigo-100", progress: "bg-indigo-500" },
+  // Distinct colors for each metric - works in light and dark mode
+  const colorMap: Record<string, { bg: string; border: string; text: string; progress: string; progressBg: string }> = {
+    "Accuracy": { 
+      bg: "bg-sky-50 dark:bg-sky-950/40", 
+      border: "border-sky-200 dark:border-sky-800", 
+      text: "text-sky-600 dark:text-sky-400", 
+      progress: "bg-sky-500 dark:bg-sky-400",
+      progressBg: "bg-sky-100 dark:bg-sky-900/50"
+    },
+    "Evaluation Score": { 
+      bg: "bg-violet-50 dark:bg-violet-950/40", 
+      border: "border-violet-200 dark:border-violet-800", 
+      text: "text-violet-600 dark:text-violet-400", 
+      progress: "bg-violet-500 dark:bg-violet-400",
+      progressBg: "bg-violet-100 dark:bg-violet-900/50"
+    },
+    "Semantic Accuracy": { 
+      bg: "bg-teal-50 dark:bg-teal-950/40", 
+      border: "border-teal-200 dark:border-teal-800", 
+      text: "text-teal-600 dark:text-teal-400", 
+      progress: "bg-teal-500 dark:bg-teal-400",
+      progressBg: "bg-teal-100 dark:bg-teal-900/50"
+    },
+    "Faithfulness": { 
+      bg: "bg-orange-50 dark:bg-orange-950/40", 
+      border: "border-orange-200 dark:border-orange-800", 
+      text: "text-orange-600 dark:text-orange-400", 
+      progress: "bg-orange-500 dark:bg-orange-400",
+      progressBg: "bg-orange-100 dark:bg-orange-900/50"
+    },
+    "Answer Relevancy": { 
+      bg: "bg-pink-50 dark:bg-pink-950/40", 
+      border: "border-pink-200 dark:border-pink-800", 
+      text: "text-pink-600 dark:text-pink-400", 
+      progress: "bg-pink-500 dark:bg-pink-400",
+      progressBg: "bg-pink-100 dark:bg-pink-900/50"
+    },
+    "Content Precision": { 
+      bg: "bg-emerald-50 dark:bg-emerald-950/40", 
+      border: "border-emerald-200 dark:border-emerald-800", 
+      text: "text-emerald-600 dark:text-emerald-400", 
+      progress: "bg-emerald-500 dark:bg-emerald-400",
+      progressBg: "bg-emerald-100 dark:bg-emerald-900/50"
+    },
+    "Context Recall": { 
+      bg: "bg-fuchsia-50 dark:bg-fuchsia-950/40", 
+      border: "border-fuchsia-200 dark:border-fuchsia-800", 
+      text: "text-fuchsia-600 dark:text-fuchsia-400", 
+      progress: "bg-fuchsia-500 dark:bg-fuchsia-400",
+      progressBg: "bg-fuchsia-100 dark:bg-fuchsia-900/50"
+    },
   }
 
-  const colors = colorMap[title] || { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700", accent: "bg-slate-100", progress: "bg-slate-500" }
+  const colors = colorMap[title] || { 
+    bg: "bg-slate-50 dark:bg-slate-900/40", 
+    border: "border-slate-200 dark:border-slate-700", 
+    text: "text-slate-600 dark:text-slate-400", 
+    progress: "bg-slate-500 dark:bg-slate-400",
+    progressBg: "bg-slate-100 dark:bg-slate-800/50"
+  }
 
   return (
-    <Card className={cn("border-2 transition-all duration-300 hover:shadow-lg", colors.bg, colors.border)}>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold text-muted-foreground">{title}</CardTitle>
-          {justification ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <InfoIcon className="h-3.5 w-3.5 text-muted-foreground/70 transition-colors hover:text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs text-xs leading-relaxed">{justification}</TooltipContent>
-            </Tooltip>
-          ) : null}
-        </div>
-        <CardDescription className={cn("text-3xl font-bold mt-2", colors.text)}>{displayValue}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-white/50 border border-white/80">
-          <div
-            className={cn("h-full rounded-full transition-all duration-500", colors.progress)}
-            style={{ width: `${normalized}%` }}
-          />
-        </div>
-        {justification ? (
-          <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground/80">
-            {justification.split('\n').filter(line => line.trim()).map((line, idx) => (
-              <li key={idx}>{line.trim()}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-muted-foreground/80">
-            Run an evaluation to generate this score.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Card className={cn("border transition-all duration-300 hover:shadow-md cursor-default", colors.bg, colors.border)}>
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between gap-1">
+              <CardTitle className="text-xs font-semibold text-muted-foreground leading-tight">{title}</CardTitle>
+              {justification && (
+                <InfoIcon className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+              )}
+            </div>
+            <CardDescription className={cn("text-2xl font-bold", colors.text)}>{displayValue}</CardDescription>
+            <div className={cn("relative h-1.5 w-full overflow-hidden rounded-full", colors.progressBg)}>
+              <div
+                className={cn("h-full rounded-full transition-all duration-500", colors.progress)}
+                style={{ width: `${normalized}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </TooltipTrigger>
+      {justification && (
+        <TooltipContent side="bottom" className="max-w-xs text-xs leading-relaxed">
+          <p className="font-medium mb-1">{title}</p>
+          {justification}
+        </TooltipContent>
+      )}
+    </Tooltip>
   )
 }

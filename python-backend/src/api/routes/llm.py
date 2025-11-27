@@ -98,6 +98,56 @@ async def test_llm_configuration(
         raise HTTPException(status_code=500, detail="Internal server error during test") from exc
 
 
+@router.post("/llm/playground-chat")
+async def playground_chat(
+    request: dict,
+    llm_service: LLMService = Depends(get_llm_service),
+):
+    """Handle playground chat requests with conversation history support."""
+
+    try:
+        dimension_raw = request.get("embedding_dimension")
+        embedding_dimension: Optional[int] = None
+        if dimension_raw not in (None, ""):
+            try:
+                embedding_dimension = int(dimension_raw)
+            except (TypeError, ValueError):
+                pass
+
+        pinecone_payload = request.get("pinecone")
+        pinecone_config = PineconeConfig.model_validate(pinecone_payload) if pinecone_payload else None
+
+        dataset_ids_raw = request.get("dataset_ids") or []
+        if not isinstance(dataset_ids_raw, list):
+            dataset_ids_raw = [dataset_ids_raw]
+        dataset_ids = [str(item).strip() for item in dataset_ids_raw if str(item).strip()]
+
+        result = await llm_service.public_chat(
+            provider=request.get("provider", ""),
+            model_id=request.get("model_id", ""),
+            system_prompt=request.get("system_prompt"),
+            vector_store=request.get("vector_store"),
+            embedding_model=request.get("embedding_model"),
+            embedding_dimension=embedding_dimension,
+            dataset_ids=dataset_ids,
+            top_k=request.get("top_k", 30),
+            question=request.get("question", ""),
+            pinecone=pinecone_config,
+        )
+        return result
+    except ValidationError as exc:
+        logger.error("Invalid configuration: %s", exc)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=exc.errors()) from exc
+    except LLMServiceError as exc:
+        logger.error("Playground chat failed: %s", exc)
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Unexpected error during playground chat: %s", exc)
+        raise HTTPException(status_code=500, detail="Internal server error during chat") from exc
+
+
 @router.post("/llm/evaluate")
 async def evaluate_llm_configuration(
     request: dict,

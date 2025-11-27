@@ -13,6 +13,7 @@ import chatbotRoutes from "./routes/chatbot.routes.js";
 import apiKeyRoutes from "./routes/apiKey.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
 import usageRoutes from "./routes/usage.routes.js";
+import playgroundRoutes from "./routes/playground.routes.js";
 import { handleStripeWebhook } from "./controllers/billing.controller.js";
 
 const app = express();
@@ -56,6 +57,7 @@ app.use("/api/chatbots", chatbotRoutes);
 app.use("/api/keys", apiKeyRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/usage", usageRoutes);
+app.use("/api/playground", playgroundRoutes);
 
 
 app.listen(PORT, async () => {
