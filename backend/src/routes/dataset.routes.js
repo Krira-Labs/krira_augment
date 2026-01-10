@@ -6,16 +6,28 @@ import fs from "fs";
 import { uploadDataset } from "../controllers/dataset.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
+import os from "os";
+
 const router = express.Router();
 
-// Use /tmp for Render deployment (ephemeral filesystem)
-// In production on Render, use tmpdir(), in local use ./uploads
-const uploadsDir = process.env.NODE_ENV === 'production'
-  ? path.join('/tmp', 'uploads')
+// Use /tmp (via os.tmpdir()) for Render deployment or production
+// This ensures we write to a valid ephemeral location
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+const uploadsDir = isProduction
+  ? path.join(os.tmpdir(), 'krira_uploads')
   : path.join(process.cwd(), 'uploads');
 
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log(`[Node] Created uploads directory: ${uploadsDir}`);
+  } catch (err) {
+    console.error(`[Node] Failed to create uploads directory at ${uploadsDir}:`, err);
+    // Fallback to simpler temp dir if custom subfolder fails
+    if (isProduction) {
+      console.warn("[Node] Falling back to system temp directory root");
+    }
+  }
 }
 
 const storage = multer.diskStorage({

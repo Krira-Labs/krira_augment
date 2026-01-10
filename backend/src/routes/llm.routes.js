@@ -11,16 +11,26 @@ import {
 } from "../controllers/llm.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
+import os from "os";
+
 const router = express.Router();
 
-// Use /tmp for Render deployment (ephemeral filesystem)
-// In production on Render, use /tmp, in local use ./test
-const evaluationDirectory = process.env.NODE_ENV === 'production'
-  ? path.join('/tmp', 'test')
+// Use /tmp (via os.tmpdir()) for Render deployment or production
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+const evaluationDirectory = isProduction
+  ? path.join(os.tmpdir(), 'krira_test')
   : path.join(process.cwd(), 'test');
 
 if (!fs.existsSync(evaluationDirectory)) {
-  fs.mkdirSync(evaluationDirectory, { recursive: true });
+  try {
+    fs.mkdirSync(evaluationDirectory, { recursive: true });
+    console.log(`[Node] Created evaluation directory: ${evaluationDirectory}`);
+  } catch (err) {
+    console.error(`[Node] Failed to create evaluation directory at ${evaluationDirectory}:`, err);
+    if (isProduction) {
+      console.warn("[Node] Falling back to system temp directory root");
+    }
+  }
 }
 
 const evaluationStorage = multer.diskStorage({

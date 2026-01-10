@@ -46,18 +46,27 @@ class DatasetLoader:
     def __init__(self, uploads_dir: Path | None = None) -> None:
         """Initialise loader with uploads directory and HTTP client session."""
 
-        # Use /tmp on production (Render), relative path locally
         import os
+        import tempfile
+        
+        is_production = os.getenv("ENVIRONMENT") == "production" or os.getenv("RENDER")
+
         if uploads_dir:
             base_path = uploads_dir
-        elif os.getenv("ENVIRONMENT") == "production":
-            base_path = Path("/tmp/uploads")
+        elif is_production:
+            # Use system temp directory + subfolder
+            base_path = Path(tempfile.gettempdir()) / "krira_uploads"
         else:
             default_uploads = Path(__file__).resolve().parents[3] / "uploads"
             base_path = default_uploads
             
         self.uploads_dir = Path(base_path).resolve()
-        self.uploads_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.uploads_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Initialized uploads directory at {self.uploads_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to create uploads dir at {self.uploads_dir}: {e}. Falling back to system temp.")
+            self.uploads_dir = Path(tempfile.gettempdir())
 
     async def load_and_chunk(
         self,
