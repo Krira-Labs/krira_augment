@@ -20,8 +20,8 @@ from .exceptions import (
     TransportError,
 )
 
-DEFAULT_BASE_URL = "https://rag-python-backend.onrender.com/v1"
-USER_AGENT = "krira-augment-sdk/1.0.0"
+DEFAULT_BASE_URL = "https://krira-augment-python-backend.onrender.com/v1"
+USER_AGENT = "krira-augment-sdk/1.0.3"
 
 # Default timeout increased to 60s to account for Render cold starts
 DEFAULT_TIMEOUT = 60.0
