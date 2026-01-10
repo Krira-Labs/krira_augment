@@ -86,8 +86,8 @@ export function EmbeddingConfiguration({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Select Embedding Model</CardTitle>
-        <CardDescription>Choose embeddings and configure the vector store.</CardDescription>
+        <CardTitle className="space-mono-regular">Select Embedding Model</CardTitle>
+        <CardDescription className="fira-mono-regular">Choose embeddings and configure the vector store.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <RadioGroup
@@ -99,54 +99,54 @@ export function EmbeddingConfiguration({
             const disabled = !allowedModels.includes(model.id)
             return (
               <Label
-              key={model.id}
-              className={cn(
-                "flex flex-col gap-3 rounded-xl border p-4 transition",
-                selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50",
-                disabled && "cursor-not-allowed opacity-60"
-              )}
-              aria-disabled={disabled}
-            >
-              <RadioGroupItem value={model.id} className="sr-only" />
-              <div className="flex items-start gap-3">
-                <Image src={model.icon} alt={`${model.name} logo`} width={40} height={40} className="h-10 w-10" />
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold">{model.name}</span>
-                    {!isPaidPlan && (
-                      <Badge className={model.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700" : "border border-purple-200 bg-purple-100 text-purple-700"}>{model.badge}</Badge>
+                key={model.id}
+                className={cn(
+                  "flex flex-col gap-3 rounded-xl border p-4 transition",
+                  selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50",
+                  disabled && "cursor-not-allowed opacity-60"
+                )}
+                aria-disabled={disabled}
+              >
+                <RadioGroupItem value={model.id} className="sr-only" />
+                <div className="flex items-start gap-3">
+                  <Image src={model.icon} alt={`${model.name} logo`} width={40} height={40} className="h-10 w-10" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold space-mono-regular">{model.name}</span>
+                      {!isPaidPlan && (
+                        <Badge className={model.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700 fira-mono-regular" : "border border-purple-200 bg-purple-100 text-purple-700 fira-mono-regular"}>{model.badge}</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground fira-mono-regular">{model.description}</p>
+                    {disabled && (
+                      <p className="text-xs font-medium text-rose-500 fira-mono-regular">Upgrade to unlock this embedding model.</p>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{model.description}</p>
-                  {disabled && (
-                    <p className="text-xs font-medium text-rose-500">Upgrade to unlock this embedding model.</p>
+                  {selectedModel === model.id && (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
                   )}
                 </div>
-                {selectedModel === model.id && (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span>
-                  Dimensions:
-                  {Array.isArray(model.dimensionOptions)
-                    ? ` ${model.dimensionOptions.join(" / ")}`
-                    : " Unknown"}
-                </span>
+                <div className="flex items-center justify-between text-xs fira-mono-regular">
+                  <span>
+                    Dimensions:
+                    {Array.isArray(model.dimensionOptions)
+                      ? ` ${model.dimensionOptions.join(" / ")}`
+                      : " Unknown"}
+                  </span>
 
-              </div>
-            </Label>
+                </div>
+              </Label>
             )
           })}
         </RadioGroup>
 
         {Array.isArray(currentModel.dimensionOptions) && currentModel.dimensionOptions.length > 1 && (
           <div className="space-y-2">
-            <Label>Embedding dimension</Label>
+            <Label className="space-mono-regular">Embedding dimension</Label>
             <Select
               value={String(selectedDimension)}
               onValueChange={(value) => onSelectDimension(Number(value))}
@@ -169,10 +169,10 @@ export function EmbeddingConfiguration({
 
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-lg">Vector Store Setup</CardTitle>
-            <CardDescription>Connect your managed vector store or use Krira default.</CardDescription>
+            <CardTitle className="text-lg space-mono-regular">Vector Store Setup</CardTitle>
+            <CardDescription className="fira-mono-regular">Connect your managed vector store or use Krira default.</CardDescription>
             {!isPaidPlan && (
-              <p className="text-xs font-medium text-amber-600">
+              <p className="text-xs font-medium text-amber-600 fira-mono-regular">
                 Upgrade to unlock Pinecone and additional managed vector databases.
               </p>
             )}
@@ -187,44 +187,44 @@ export function EmbeddingConfiguration({
                 const disabled = !allowedVectorStores.includes(option.value)
                 return (
                   <Label
-                  key={option.value}
-                  className={cn(
-                    "flex flex-col gap-3 rounded-lg border p-4",
-                    vectorStore === option.value ? "border-primary bg-primary/5" : "border-dashed",
-                    disabled && "cursor-not-allowed opacity-60"
-                  )}
-                  aria-disabled={disabled}
-                >
-                  <RadioGroupItem value={option.value} className="sr-only" />
-                  <div className="flex items-start gap-3">
-                    <Image
-                      src={option.icon}
-                      alt={`${option.label} logo`}
-                      width={56}
-                      height={56}
-                      className="h-14 w-14 object-contain"
-                    />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-semibold">{option.label}</span>
-                        {!isPaidPlan && (
-                          <Badge className={option.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700" : "border border-purple-200 bg-purple-100 text-purple-700"}>{option.badge}</Badge>
+                    key={option.value}
+                    className={cn(
+                      "flex flex-col gap-3 rounded-lg border p-4",
+                      vectorStore === option.value ? "border-primary bg-primary/5" : "border-dashed",
+                      disabled && "cursor-not-allowed opacity-60"
+                    )}
+                    aria-disabled={disabled}
+                  >
+                    <RadioGroupItem value={option.value} className="sr-only" />
+                    <div className="flex items-start gap-3">
+                      <Image
+                        src={option.icon}
+                        alt={`${option.label} logo`}
+                        width={56}
+                        height={56}
+                        className="h-14 w-14 object-contain"
+                      />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold space-mono-regular">{option.label}</span>
+                          {!isPaidPlan && (
+                            <Badge className={option.badge === "Free" ? "border border-yellow-200 bg-yellow-100 text-yellow-700 fira-mono-regular" : "border border-purple-200 bg-purple-100 text-purple-700 fira-mono-regular"}>{option.badge}</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground fira-mono-regular">{option.description}</p>
+                        {disabled && (
+                          <p className="text-xs font-medium text-rose-500 fira-mono-regular">Available on paid plans.</p>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{option.description}</p>
-                      {disabled && (
-                        <p className="text-xs font-medium text-rose-500">Available on paid plans.</p>
+                      {vectorStore === option.value && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
                       )}
                     </div>
-                    {vectorStore === option.value && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </Label>
+                  </Label>
                 )
               })}
             </RadioGroup>
@@ -233,25 +233,26 @@ export function EmbeddingConfiguration({
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label>Pinecone API Key</Label>
+                    <Label className="space-mono-regular">Pinecone API Key</Label>
                     <Input
                       type="password"
                       value={pineconeKey}
                       onChange={(event) => setPineconeKey(event.target.value)}
                       placeholder="pc-xxxxxxxx"
+                      className="fira-mono-regular"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Index Name</Label>
-                    <Input value={indexName} onChange={(event) => setIndexName(event.target.value)} />
+                    <Label className="space-mono-regular">Index Name</Label>
+                    <Input value={indexName} onChange={(event) => setIndexName(event.target.value)} className="fira-mono-regular" />
                   </div>
                 </div>
               </div>
             ) : (
               <Alert className="border-primary/30 bg-primary/5">
-                <AlertTitle>Chroma selected</AlertTitle>
-                <AlertDescription>
-                  We’ll persist embeddings locally using a managed Chroma instance – no credentials required.
+                <AlertTitle className="space-mono-regular">Chroma selected</AlertTitle>
+                <AlertDescription className="fira-mono-regular">
+                  We'll persist embeddings locally using a managed Chroma instance – no credentials required.
                 </AlertDescription>
               </Alert>
             )}
@@ -261,7 +262,7 @@ export function EmbeddingConfiguration({
         </Card>
 
         <div className="space-y-3">
-          <Button onClick={onStartEmbedding} disabled={isEmbedding} className="gap-2">
+          <Button onClick={onStartEmbedding} disabled={isEmbedding} className="gap-2 space-mono-regular">
             {isEmbedding ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
             {isEmbedding ? "Embedding in progress" : "Start embedding"}
           </Button>
@@ -270,8 +271,8 @@ export function EmbeddingConfiguration({
           {embeddingSummary && (
             <div className="space-y-3 rounded-lg border border-muted-foreground/20 bg-muted/30 p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold">Latest embedding run</span>
-                <Badge className="text-xs border border-emerald-200 bg-emerald-50 text-emerald-700">
+                <span className="font-semibold space-mono-regular">Latest embedding run</span>
+                <Badge className="text-xs border border-emerald-200 bg-emerald-50 text-emerald-700 fira-mono-regular">
                   {embeddingSummary.results.length} success{embeddingSummary.results.length === 1 ? "" : "es"}
                   {embeddingSummary.errors.length > 0
                     ? ` • ${embeddingSummary.errors.length} issue${embeddingSummary.errors.length > 1 ? "s" : ""}`
@@ -285,12 +286,12 @@ export function EmbeddingConfiguration({
                     className="rounded-md border border-emerald-400/40 bg-emerald-50/70 p-3 text-xs text-emerald-700"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-emerald-800">{result.label}</span>
-                      <Badge className="border border-emerald-200 bg-emerald-100 text-emerald-700">
+                      <span className="font-semibold text-emerald-800 space-mono-regular">{result.label}</span>
+                      <Badge className="border border-emerald-200 bg-emerald-100 text-emerald-700 fira-mono-regular">
                         {result.chunks_embedded} / {result.chunks_processed} chunks
                       </Badge>
                     </div>
-                    <p className="mt-1 text-emerald-600">
+                    <p className="mt-1 text-emerald-600 fira-mono-regular">
                       Stored in {result.vector_store.toUpperCase()} using {result.embedding_model.replace(/-/g, " ")}
                     </p>
                   </div>

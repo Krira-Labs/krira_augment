@@ -36,14 +36,14 @@ export function Stepper({ activeStep, onStepChange, maxUnlockedStep = activeStep
         {/* Header section */}
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+            <CardTitle className="text-2xl font-bold tracking-tight text-foreground space-mono-regular">
               RAG Pipeline Builder
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-muted-foreground fira-mono-regular">
               Configure your AI assistant in 6 simple steps
             </CardDescription>
           </div>
-          <Badge variant="secondary" className="px-3 py-1">
+          <Badge variant="secondary" className="px-3 py-1 fira-mono-regular">
             Step {activeStep + 1} of {STEPS.length}
           </Badge>
         </div>
@@ -148,7 +148,7 @@ export function Stepper({ activeStep, onStepChange, maxUnlockedStep = activeStep
                 >
                   <span
                     className={cn(
-                      "block text-xs font-bold tracking-wide",
+                      "block text-xs font-bold tracking-wide space-mono-regular",
                       status === "active" && "text-primary",
                       status === "completed" && "text-green-600",
                       status === "pending" && "text-foreground/70"
@@ -158,7 +158,7 @@ export function Stepper({ activeStep, onStepChange, maxUnlockedStep = activeStep
                   </span>
                   <span
                     className={cn(
-                      "block text-[10px] mt-0.5 font-medium",
+                      "block text-[10px] mt-0.5 font-medium fira-mono-regular",
                       status === "active" && "text-primary/80",
                       status === "completed" && "text-green-600/80",
                       status === "pending" && "text-muted-foreground"
@@ -175,8 +175,8 @@ export function Stepper({ activeStep, onStepChange, maxUnlockedStep = activeStep
         {/* Progress bar at bottom */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Pipeline Progress</span>
-            <span className="font-mono">{Math.round(progressPercentage)}%</span>
+            <span className="fira-mono-regular">Pipeline Progress</span>
+            <span className="font-mono space-mono-regular">{Math.round(progressPercentage)}%</span>
           </div>
           <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div

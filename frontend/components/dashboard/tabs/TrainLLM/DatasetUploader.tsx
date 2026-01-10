@@ -62,8 +62,8 @@ export function DatasetUploader({
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Upload Dataset</CardTitle>
-        <CardDescription>Select the knowledge source that powers your chatbot.</CardDescription>
+        <CardTitle className="space-mono-regular">Upload Dataset</CardTitle>
+        <CardDescription className="fira-mono-regular">Select the knowledge source that powers your chatbot.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <RadioGroup value={datasetType} onValueChange={(value) => setDatasetType(value as DatasetType)} className="grid gap-3 sm:grid-cols-3">
@@ -80,8 +80,8 @@ export function DatasetUploader({
               >
                 <RadioGroupItem value={option.value} className="sr-only" />
                 <Icon className="h-5 w-5 text-primary" />
-                <span className="text-sm font-semibold">{option.label}</span>
-                <span className="text-xs text-muted-foreground">{option.description}</span>
+                <span className="text-sm font-semibold space-mono-regular">{option.label}</span>
+                <span className="text-xs text-muted-foreground fira-mono-regular">{option.description}</span>
               </Label>
             )
           })}
@@ -98,16 +98,16 @@ export function DatasetUploader({
           >
             <input {...dropzone.getInputProps()} />
             <UploadCloud className="mb-3 h-10 w-10 text-primary" />
-            <p className="text-sm font-semibold">Drag & drop or click to upload*</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-semibold space-mono-regular">Drag & drop or click to upload*</p>
+            <p className="text-xs text-muted-foreground fira-mono-regular">
               Supported formats: {datasetType === "csv" ? "CSV" : datasetType === "json" ? "JSON" : "PDF"}
             </p>
           </div>
         ) : (
           <Card className="border-dashed">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-base">Add Website URLs</CardTitle>
-              <CardDescription>Add your sitemap or individual pages for crawling.</CardDescription>
+              <CardTitle className="text-base space-mono-regular">Add Website URLs</CardTitle>
+              <CardDescription className="fira-mono-regular">Add your sitemap or individual pages for crawling.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {websiteUrls.map((url, index) => (
@@ -116,14 +116,14 @@ export function DatasetUploader({
                     value={url}
                     onChange={(event) => onUrlChange(index, event.target.value)}
                     placeholder="https://example.com"
-                    className="flex-1"
+                    className="flex-1 fira-mono-regular"
                   />
                   <Button variant="ghost" size="icon" onClick={() => onRemoveUrl(index)} disabled={websiteUrls.length === 1}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-              <Button onClick={onAddUrl} variant="outline" size="sm" className="gap-2">
+              <Button onClick={onAddUrl} variant="outline" size="sm" className="gap-2 space-mono-regular">
                 <Plus className="h-4 w-4" /> Add another URL
               </Button>
             </CardContent>
@@ -132,13 +132,13 @@ export function DatasetUploader({
 
         {currentFiles.length > 0 && showFileUpload && (
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Uploaded files</Label>
+            <Label className="text-sm font-medium space-mono-regular">Uploaded files</Label>
             <div className="space-y-2">
               {currentFiles.map((entry) => (
                 <div key={entry.id} className="flex items-center justify-between rounded-md border bg-muted/40 p-3 text-sm">
                   <div className="flex flex-col gap-1 text-left md:flex-row md:items-center md:gap-2">
-                    <span className="font-medium text-foreground">{entry.file.name}</span>
-                    <span className="text-xs text-muted-foreground">{formatFileSize(entry.file.size)}</span>
+                    <span className="font-medium text-foreground space-mono-regular">{entry.file.name}</span>
+                    <span className="text-xs text-muted-foreground fira-mono-regular">{formatFileSize(entry.file.size)}</span>
                   </div>
                   <Button
                     variant="ghost"

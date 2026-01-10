@@ -18,14 +18,16 @@ router = APIRouter(prefix="/v1", tags=["public"])
 
 
 class ChatRequest(BaseModel):
-    bot_id: str = Field(..., min_length=4)
+    """Request model for chat API - accepts pipeline_name from new SDK."""
+    pipeline_name: str = Field(..., min_length=4, description="The name/ID of the RAG pipeline to use")
     query: str = Field(..., min_length=1)
     conversation_id: Optional[str] = Field(default=None, max_length=64)
     metadata: Optional[Dict[str, Any]] = None
 
 
 class ChatResponse(BaseModel):
-    bot_id: str
+    """Response model for chat API - returns pipeline_name for new SDK."""
+    pipeline_name: str
     answer: str
     latency_ms: int
     conversation_id: Optional[str] = None
@@ -35,14 +37,16 @@ class ChatResponse(BaseModel):
 async def _verify_api_key(
     *,
     api_key: str,
-    bot_id: str,
+    pipeline_name: str,
     settings: Settings,
 ) -> Dict[str, Any]:
+    """Verify API key with the Node.js backend (uses botId internally for compatibility)."""
     if not settings.service_api_secret:
         raise HTTPException(status_code=500, detail="SERVICE_API_SECRET is not configured")
 
     verify_url = settings.api_verification_url.rstrip("/")
-    payload = {"apiKey": api_key, "botId": bot_id}
+    # Internal call to Node.js backend still uses botId for backward compatibility
+    payload = {"apiKey": api_key, "botId": pipeline_name}
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
@@ -64,11 +68,11 @@ async def _verify_api_key(
 async def _track_usage(
     *,
     api_key: str,
-    bot_id: str,
+    pipeline_name: str,
     settings: Settings,
     tokens: int = 0,
 ) -> None:
-    """Track usage for SDK API calls."""
+    """Track usage for SDK API calls (uses botId internally for Node.js backend compatibility)."""
     if not settings.service_api_secret:
         return  # Skip tracking if not configured
 
@@ -76,7 +80,8 @@ async def _track_usage(
     base_url = settings.api_verification_url.rsplit("/", 1)[0]
     track_url = f"{base_url}/track-usage"
     
-    payload = {"apiKey": api_key, "botId": bot_id, "tokens": tokens}
+    # Internal call to Node.js backend still uses botId for backward compatibility
+    payload = {"apiKey": api_key, "botId": pipeline_name, "tokens": tokens}
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
@@ -104,21 +109,22 @@ def _extract_bearer_token(authorization: str | None) -> str:
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_bot(
+async def chat_with_pipeline(
     payload: ChatRequest,
     authorization: str | None = Header(default=None),
     llm_service: LLMService = Depends(get_llm_service),
     settings: Settings = Depends(get_settings),
 ) -> ChatResponse:
+    """Chat with a RAG pipeline using the Krira Augment SDK."""
     api_key = _extract_bearer_token(authorization)
-    verification = await _verify_api_key(api_key=api_key, bot_id=payload.bot_id, settings=settings)
+    verification = await _verify_api_key(api_key=api_key, pipeline_name=payload.pipeline_name, settings=settings)
 
     bot = verification.get("bot") or {}
     llm_config = bot.get("llm") or {}
     embedding_config = bot.get("embedding") or {}
 
     if not llm_config:
-        raise HTTPException(status_code=400, detail="Bot is not configured with an LLM")
+        raise HTTPException(status_code=400, detail="Pipeline is not configured with an LLM")
 
     start = time.perf_counter()
     try:
@@ -142,13 +148,13 @@ async def chat_with_bot(
     # Track usage after successful chat
     await _track_usage(
         api_key=api_key,
-        bot_id=payload.bot_id,
+        pipeline_name=payload.pipeline_name,
         settings=settings,
         tokens=0,  # TODO: Get actual token count from chat_result if available
     )
     
     return ChatResponse(
-        bot_id=payload.bot_id,
+        pipeline_name=payload.pipeline_name,
         answer=chat_result["answer"],
         latency_ms=latency_ms,
         conversation_id=payload.conversation_id,

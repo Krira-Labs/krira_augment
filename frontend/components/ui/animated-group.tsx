@@ -100,24 +100,6 @@ const addDefaultVariants = (variants: Variants) => ({
   visible: { ...defaultItemVariants.visible, ...variants.visible },
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const MOTION_ELEMENTS: Record<string, React.ComponentType<any>> = {
-  div: motion.div,
-  section: motion.section,
-  article: motion.article,
-  header: motion.header,
-  footer: motion.footer,
-  main: motion.main,
-  ul: motion.ul,
-  li: motion.li,
-  p: motion.p,
-  span: motion.span,
-  h1: motion.h1,
-  h2: motion.h2,
-  h3: motion.h3,
-  h4: motion.h4,
-};
-
 function AnimatedGroup({
   children,
   className,
@@ -133,12 +115,14 @@ function AnimatedGroup({
   const containerVariants = variants?.container || selectedVariants.container;
   const itemVariants = variants?.item || selectedVariants.item;
 
-  const MotionComponent =
-    typeof as === 'string' && MOTION_ELEMENTS[as] ? MOTION_ELEMENTS[as] : motion.div;
-  const MotionChild =
-    typeof asChild === 'string' && MOTION_ELEMENTS[asChild]
-      ? MOTION_ELEMENTS[asChild]
-      : motion.div;
+  const MotionComponent = React.useMemo(
+    () => motion.create(as as any),
+    [as]
+  );
+  const MotionChild = React.useMemo(
+    () => motion.create(asChild as any),
+    [asChild]
+  );
 
   return (
     <MotionComponent

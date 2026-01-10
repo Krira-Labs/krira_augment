@@ -1,64 +1,58 @@
 'use client'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import Link from 'next/link'
 
 type FAQItem = {
     id: string
-    icon: IconName
     question: string
     answer: string
 }
 
-export default function FAQsThree() {
+export default function FAQSection() {
     const faqItems: FAQItem[] = [
         {
             id: 'item-1',
-            icon: 'clock',
-            question: 'What are your business hours?',
-            answer: 'Our customer service team is available Monday through Friday from 9:00 AM to 8:00 PM EST, and weekends from 10:00 AM to 6:00 PM EST. During holidays, hours may vary and will be posted on our website.',
+            question: 'What makes Krira different from other RAG providers?',
+            answer: 'Krira provides end-to-end managed infrastructure specifically designed for scaling RAG applications. Unlike generic vector DBs or raw model APIs, we handle the complex orchestration, chunking strategies, and retrieval optimization, allowing you to focus on building your product.',
         },
         {
             id: 'item-2',
-            icon: 'credit-card',
-            question: 'How do subscription payments work?',
-            answer: 'Subscription payments are automatically charged to your default payment method on the same day each month or year, depending on your billing cycle. You can update your payment information and view billing history in your account dashboard.',
+            question: 'Can I use my own vector database and models?',
+            answer: 'Yes. While we offer a fully managed internal vector store and embedding models for convenience, our "Starter" and "Enterprise" plans allow you to bring your own providers (like Pinecone, Chroma, OpenAI, Anthropic) while still leveraging our orchestration layer.',
         },
         {
             id: 'item-3',
-            icon: 'truck',
-            question: 'Can I expedite my shipping?',
-            answer: 'Yes, we offer several expedited shipping options at checkout. Next-day and 2-day shipping are available for most U.S. addresses if orders are placed before 2:00 PM EST. International expedited shipping options vary by destination.',
+            question: 'How is data security handled?',
+            answer: 'Security is a top priority. We use enterprise-grade encryption for data at rest and in transit. For our Enterprise customers, we offer advanced features like private VPC deployment and custom data retention policies to meet compliance requirements.',
         },
         {
             id: 'item-4',
-            icon: 'globe',
-            question: 'Do you offer localized support?',
-            answer: 'We offer multilingual support in English, Spanish, French, German, and Japanese. Our support team can assist customers in these languages via email, chat, and phone during standard business hours for each respective region.',
+            question: 'What happens if I exceed my plan limits?',
+            answer: 'If you approach your plan limits, we will notify you via email. For "Free" plans, access may be paused until the next billing cycle. "Starter" and "Enterprise" plans have soft limits with the option to purchase additional on-demand credits to ensure uninterrupted service.',
         },
         {
             id: 'item-5',
-            icon: 'package',
-            question: 'How do I track my order?',
-            answer: 'Once your order ships, you’ll receive a confirmation email with a tracking number. You can use this number on our website or the carrier’s website to track your package. You can also view order status and tracking information in your account dashboard under "Order History".',
+            question: 'Do you offer technical support for integration?',
+            answer: 'Absolutely. All plans include access to our comprehensive documentation and community forums. Paid plans receive priority email support, and Enterprise customers get a dedicated success manager to assist with architectural reviews and integration.',
         },
     ]
 
     return (
-        <section className="bg-muted dark:bg-background py-20">
-            <div className="mx-auto max-w-5xl px-4 md:px-6">
-                <div className="flex flex-col gap-10 md:flex-row md:gap-16">
+        <section className="py-20 md:py-32 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="mx-auto max-w-6xl px-6">
+                <div className="flex flex-col gap-10 md:flex-row md:gap-20">
                     <div className="md:w-1/3">
-                        <div className="sticky top-20">
-                            <h2 className="mt-4 text-3xl font-bold">Frequently Asked Questions</h2>
-                            <p className="text-muted-foreground mt-4">
-                                Can’t find what you’re looking for? Contact our{' '}
+                        <div className="sticky top-24">
+                            <h2 className="text-3xl font-bold space-mono-regular leading-tight lg:text-4xl">Frequently Asked Questions</h2>
+                            <p className="text-muted-foreground mt-4 space-mono-regular">
+                                Have more questions? Reach out to our{' '}
                                 <Link
-                                    href="#"
-                                    className="text-primary font-medium hover:underline">
-                                    customer support team
+                                    href="mailto:support@krira.ai"
+                                    className="text-primary font-bold hover:underline">
+                                    support team
                                 </Link>
+                                .
                             </p>
                         </div>
                     </div>
@@ -66,26 +60,19 @@ export default function FAQsThree() {
                         <Accordion
                             type="single"
                             collapsible
-                            className="w-full space-y-2">
+                            className="w-full space-y-4">
                             {faqItems.map((item) => (
                                 <AccordionItem
                                     key={item.id}
                                     value={item.id}
-                                    className="bg-background shadow-xs rounded-lg border px-4 last:border-b">
-                                    <AccordionTrigger className="cursor-pointer items-center py-5 hover:no-underline">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex size-6">
-                                                <DynamicIcon
-                                                    name={item.icon}
-                                                    className="m-auto size-4"
-                                                />
-                                            </div>
-                                            <span className="text-base">{item.question}</span>
-                                        </div>
+                                    className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 px-0"
+                                >
+                                    <AccordionTrigger className="cursor-pointer py-6 hover:no-underline hover:text-primary transition-colors text-left">
+                                        <span className="text-lg font-medium space-mono-regular">{item.question}</span>
                                     </AccordionTrigger>
-                                    <AccordionContent className="pb-5">
-                                        <div className="px-9">
-                                            <p className="text-base">{item.answer}</p>
+                                    <AccordionContent className="pb-6">
+                                        <div className="pr-4">
+                                            <p className="text-base text-muted-foreground leading-relaxed space-mono-regular">{item.answer}</p>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>

@@ -5,79 +5,32 @@ const links = [
     {
         group: 'Product',
         items: [
-            {
-                title: 'Features',
-                href: '#',
-            },
-            {
-                title: 'Pricing',
-                href: '#',
-            },
-            {
-                title: 'Documentation',
-                href: '#',
-            },
-            {
-                title: 'API Reference',
-                href: '#',
-            },
-            {
-                title: 'Changelog',
-                href: '#',
-            },
+            { title: 'Features', href: '/features' },
+            { title: 'Pricing', href: '/pricing' },
+            { title: 'Documentation', href: '/docs' },
+            // { title: 'API Reference', href: '/api-reference' },
         ],
     },
     {
-        group: 'Company',
+        group: 'Resources',
         items: [
-            {
-                title: 'About Us',
-                href: '#',
-            },
-            {
-                title: 'Blog',
-                href: '#',
-            },
-            {
-                title: 'Careers',
-                href: '#',
-            },
-            {
-                title: 'Contact',
-                href: '#',
-            },
-            {
-                title: 'Support',
-                href: '#',
-            },
+            // { title: 'Blog', href: '/blogs' },
+            // { title: 'Community', href: '#' },
+            { title: 'Contact', href: '/contact' },
         ],
     },
     {
         group: 'Legal',
         items: [
-            {
-                title: 'Privacy Policy',
-                href: '#',
-            },
-            {
-                title: 'Terms of Service',
-                href: '#',
-            },
-            {
-                title: 'Cookie Policy',
-                href: '#',
-            },
-            {
-                title: 'Security',
-                href: '#',
-            },
+            { title: 'Privacy', href: '/privacy' },
+            { title: 'Terms', href: '/terms' },
         ],
     },
 ]
 
 export default function FooterSection() {
     return (
-        <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 pt-20">
+        <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-background pt-16 pb-8">
             <div className="mx-auto max-w-6xl px-6">
                 <div className="grid gap-12 md:grid-cols-4">
                     <div className="md:col-span-1">
@@ -87,20 +40,20 @@ export default function FooterSection() {
                             className="block size-fit mb-4">
                             <Logo />
                         </Link>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">AI-powered chatbots made simple</p>
+                        <p className="text-sm text-muted-foreground space-mono-regular">Enterprise-grade RAG Infrastructure.</p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-8 md:col-span-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:col-span-3">
                         {links.map((link, index) => (
                             <div
                                 key={index}
                                 className="space-y-4 text-sm">
-                                <span className="block font-semibold text-slate-900 dark:text-white">{link.group}</span>
+                                <span className="block font-bold text-foreground space-mono-regular">{link.group}</span>
                                 {link.items.map((item, index) => (
                                     <Link
                                         key={index}
                                         href={item.href}
-                                        className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 block duration-150">
+                                        className="text-muted-foreground hover:text-primary block transition-colors duration-200 space-mono-regular">
                                         <span>{item.title}</span>
                                     </Link>
                                 ))}
@@ -108,11 +61,11 @@ export default function FooterSection() {
                         ))}
                     </div>
                 </div>
-                <div className="mt-12 flex flex-wrap items-end justify-between gap-6 border-t border-slate-200 dark:border-slate-800 py-6">
-                    <span className="text-slate-600 dark:text-slate-400 order-last block text-center text-sm md:order-first">© {new Date().getFullYear()} Krira AI. All rights reserved</span>
-                    <div className="order-first flex flex-wrap justify-center gap-6 text-sm md:order-last">
-                        <span className="text-slate-600 dark:text-slate-400 text-xs">🟢 All systems operational</span>
-                    </div>
+                <div className="mt-12 flex justify-center flex-col md:flex-row items-center justify-between gap-6 border-t border-zinc-200 dark:border-zinc-800 pt-8">
+                    <span className="text-muted-foreground text-xs md:text-sm space-mono-regular text-center md:text-left">
+                        Copyright © 2025 Krira Labs. All rights reserved.
+                    </span>
+
                 </div>
             </div>
         </footer>

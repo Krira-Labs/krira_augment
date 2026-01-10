@@ -1,16 +1,21 @@
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { cn } from '@/lib/utils'
+
+import Image from 'next/image'
 
 export const Logo = ({ className, uniColor }: { className?: string; uniColor?: boolean }) => {
     return (
-        <Image
-            src="/krira-augment-logo.png"
-            alt="KriraAI Logo"
-            width={40}
-            height={40}
-            className={cn('object-contain', className)}
-            style={uniColor ? { filter: 'invert(1) grayscale(1) brightness(2)' } : {}}
-        />  
+        <div className={cn('flex items-center gap-2', className)}>
+            <Image
+                src="/krira-augment-logo3.jpeg"
+                alt="Krira Augment Logo"
+                width={32}
+                height={32}
+                className="rounded-md object-cover"
+            />
+            <span className="space-mono-regular text-lg text-foreground">
+                Krira Augment
+            </span>
+        </div>
     )
 }
 

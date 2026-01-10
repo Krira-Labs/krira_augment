@@ -8,9 +8,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { authService } from '@/lib/api/auth.service'
 import GoogleAuthButton from '@/components/GoogleAuthButton'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, FormEvent } from 'react'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -72,22 +73,38 @@ export default function LoginPage() {
     }
 
     return (
-        <section className="flex min-h-screen bg-background px-4 py-16 md:py-18">
+        <section className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-16 md:py-18 relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+
+            {/* Back Button */}
+            <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <ArrowLeft className="size-5" />
+                <span className="space-mono-regular text-sm font-medium">Back</span>
+            </Link>
+
             <form
                 onSubmit={handleSubmit}
-                className="bg-card m-auto h-fit w-full max-w-md rounded-lg border p-0.5 shadow-md">
-                <div className="p-8 pb-6">
-                    <div>
+                className="bg-background relative z-10 w-full max-w-[400px] rounded-xl border border-border shadow-xl overflow-hidden">
+                <div className="p-8">
+                    <div className="mb-8">
                         <Link
                             href="/"
-                            aria-label="go home">
-                            <LogoIcon />
+                            aria-label="go home"
+                            className="inline-block mb-6">
+                            <Image
+                                src="/krira-augment-logo3.jpeg"
+                                alt="Krira Logo"
+                                width={60}
+                                height={60}
+                                className="rounded-lg"
+                            />
                         </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Sign In to Krira AI</h1>
-                        <p className="text-muted-foreground text-sm">Welcome back! Sign in to continue</p>
+                        <h1 className="mb-2 text-2xl font-bold space-mono-regular">Sign In to Krira</h1>
+                        <p className="text-muted-foreground text-sm space-mono-regular">Welcome back! Sign in to continue</p>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                         <GoogleAuthButton mode="signin" />
                     </div>
 
@@ -95,16 +112,16 @@ export default function LoginPage() {
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-border"></div>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                        <div className="relative flex justify-center text-[10px] uppercase font-medium tracking-wider">
+                            <span className="bg-background px-3 text-muted-foreground space-mono-regular">Or continue with</span>
                         </div>
                     </div>
 
-                    <div className="space-y-5">
+                    <div className="space-y-4">
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
-                                className="block text-sm">
+                                className="block text-sm font-medium space-mono-regular">
                                 Email
                             </Label>
                             <Input
@@ -116,26 +133,16 @@ export default function LoginPage() {
                                 onChange={handleInputChange}
                                 placeholder="Enter your email"
                                 disabled={isLoading}
+                                className="space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label
-                                    htmlFor="password"
-                                    className="text-sm">
-                                    Password
-                                </Label>
-                                <Button
-                                    asChild
-                                    variant="link"
-                                    size="sm"
-                                    className="px-0 text-sm">
-                                    <Link href="/forgotpassword">
-                                        Forgot your Password?
-                                    </Link>
-                                </Button>
-                            </div>
+                            <Label
+                                htmlFor="password"
+                                className="text-sm font-medium space-mono-regular">
+                                Password
+                            </Label>
                             <div className="relative">
                                 <Input
                                     type={showPassword ? "text" : "password"}
@@ -145,8 +152,9 @@ export default function LoginPage() {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     placeholder="Enter your password"
-                                    className="pr-10"
+                                    className="pr-10 space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                                     disabled={isLoading}
+                                    autoComplete="current-password"
                                 />
                                 <button
                                     type="button"
@@ -156,11 +164,22 @@ export default function LoginPage() {
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
+                            <div className="flex justify-end">
+                                <Button
+                                    asChild
+                                    variant="link"
+                                    size="sm"
+                                    className="px-0 text-xs h-auto font-normal space-mono-regular text-muted-foreground hover:text-primary">
+                                    <Link href="/forgotpassword">
+                                        Forgot Password?
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
 
-                        <Button 
+                        <Button
                             type="submit"
-                            className="w-full"
+                            className="w-full font-bold space-mono-regular mt-2"
                             disabled={isLoading}
                         >
                             {isLoading ? (
@@ -175,15 +194,12 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <div className="bg-muted rounded-b-lg border-t p-4">
-                    <p className="text-foreground text-center text-sm">
-                        Do not have an account?
-                        <Button
-                            asChild
-                            variant="link"
-                            className="px-2">
-                            <Link href="/signup">Create account</Link>
-                        </Button>
+                <div className="bg-muted/50 border-t p-4 text-center">
+                    <p className="text-sm text-muted-foreground space-mono-regular">
+                        Do not have an account?{' '}
+                        <Link href="/signup" className="text-primary font-bold hover:underline">
+                            Create account
+                        </Link>
                     </p>
                 </div>
             </form>

@@ -84,8 +84,8 @@ const CodeSnippet = ({ label, code, language }: { label: string; code: string; l
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">{label}</p>
-        <Button variant="ghost" size="sm" className="gap-2" onClick={handleCopy}>
+        <p className="text-sm font-medium space-mono-regular">{label}</p>
+        <Button variant="ghost" size="sm" className="gap-2 space-mono-regular" onClick={handleCopy}>
           <Copy className="h-4 w-4" /> Copy
         </Button>
       </div>
@@ -147,6 +147,21 @@ export function ApiKeysTab() {
 
   const handleKeyCreation = async () => {
     if (!keyName || !selectedBot) return
+
+    // Check if key name already exists (case-insensitive)
+    const isDuplicate = keys.some(
+      (k) => k.name.toLowerCase() === keyName.trim().toLowerCase()
+    )
+
+    if (isDuplicate) {
+      toast({
+        title: "API key already exists",
+        description: `A key named "${keyName}" already exists. Please use a unique name.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const payload: CreateApiKeyPayload = {
@@ -161,8 +176,18 @@ export function ApiKeysTab() {
 
       const response = await apiKeysService.create(payload)
       setKeys((prev) => [response.apiKey, ...prev])
-      setGeneratedKey(response.key)
-      toast({ title: "API key created", description: "Copy the secret now. It will only be shown once." })
+
+      // Auto-copy to clipboard
+      if (typeof window !== 'undefined') {
+        await navigator.clipboard.writeText(response.key)
+      }
+
+      toast({
+        title: "API key created & copied!",
+        description: "The secret key has been copied to your clipboard. Store it securely as it won't be shown again."
+      })
+
+      resetDialog()
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Failed to create API key"
       toast({ title: "Could not create key", description: message, variant: "destructive" })
@@ -203,26 +228,26 @@ export function ApiKeysTab() {
   const curlSnippet = `curl -X POST ${PUBLIC_API_URL}/chat \\
   -H "Authorization: Bearer ${snippetKey}" \\
   -H "Content-Type: application/json" \\
-  -d '{"bot_id": "${snippetBotIdentifier}", "query": "What is the status of my order?"}'`
+  -d '{"pipeline_name": "${snippetBotIdentifier}", "query": "What is the status of my order?"}'`
 
-  const pythonSnippet = `from kriralabs import Kriralabs\n\nclient = Kriralabs(api_key="${snippetKey}", bot_id="${snippetBotIdentifier}")\nresponse = client.ask("What is the status of my order?")\nprint(response.answer)`
+  const pythonSnippet = `from krira_augment import KriraAugment\n\nclient = KriraAugment(api_key="${snippetKey}", pipeline_name="${snippetBotIdentifier}")\nresponse = client.ask("What can you help me with?")\nprint(response.answer)`
 
   return (
     <div className="space-y-6 overflow-x-hidden">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">API Key Management</h2>
-          <p className="text-sm text-muted-foreground">Generate, rotate, and revoke API keys used by your integrations.</p>
+          <h2 className="text-2xl font-semibold space-mono-regular">API Key Management</h2>
+          <p className="text-sm text-muted-foreground fira-mono-regular">Generate, rotate, and revoke API keys used by your integrations.</p>
         </div>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+        <Button className="gap-2 space-mono-regular" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" /> Generate new API key
         </Button>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle>Active keys</CardTitle>
-          <CardDescription>Rotate keys regularly and delete unused credentials.</CardDescription>
+          <CardTitle className="space-mono-regular">Active keys</CardTitle>
+          <CardDescription className="fira-mono-regular">Rotate keys regularly and delete unused credentials.</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {isLoading ? (
@@ -234,7 +259,7 @@ export function ApiKeysTab() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="space-mono-regular">
                   <TableHead>Name</TableHead>
                   <TableHead>Bot</TableHead>
                   <TableHead>Key</TableHead>
@@ -247,7 +272,7 @@ export function ApiKeysTab() {
               </TableHeader>
               <TableBody>
                 {keys.map((key) => (
-                  <TableRow key={key.id}>
+                  <TableRow key={key.id} className="fira-mono-regular">
                     <TableCell className="font-medium">{key.name}</TableCell>
                     <TableCell>{key.bot?.name ?? "—"}</TableCell>
                     <TableCell className="font-mono text-sm">{key.maskedKey}</TableCell>
@@ -291,8 +316,8 @@ export function ApiKeysTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Integration Guide</CardTitle>
-          <CardDescription>Complete guide to integrate your chatbot into your applications.</CardDescription>
+          <CardTitle className="space-mono-regular">Integration Guide</CardTitle>
+          <CardDescription className="fira-mono-regular">Complete guide to integrate your chatbot into your applications.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* Step 1: Installation */}
@@ -302,7 +327,7 @@ export function ApiKeysTab() {
               <h3 className="font-medium">Installation</h3>
             </div>
             <div className="pl-8">
-              <CodeSnippet label="Terminal" code="pip install kriralabs" language="bash" />
+              <CodeSnippet label="Terminal" code="pip install krira-augment-sdk" language="bash" />
             </div>
           </div>
 
@@ -310,16 +335,16 @@ export function ApiKeysTab() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">2</div>
-              <h3 className="font-medium">Configuration</h3>
+              <h3 className="font-medium space-mono-regular">Configuration</h3>
             </div>
             <div className="grid gap-4 pl-8 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Authorization Header</Label>
+                <Label className="text-xs text-muted-foreground space-mono-regular">Authorization Header</Label>
                 <CodeSnippet label="Header" code={`Authorization: Bearer ${snippetKey}`} language="bash" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Bot ID</Label>
-                <CodeSnippet label="ID" code={snippetBotIdentifier} language="text" />
+                <Label className="text-xs text-muted-foreground space-mono-regular">Pipeline Name</Label>
+                <CodeSnippet label="Name" code={snippetBotIdentifier} language="text" />
               </div>
             </div>
           </div>
@@ -333,8 +358,8 @@ export function ApiKeysTab() {
             <div className="pl-8">
               <Tabs defaultValue="python" className="w-full">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="python">Python SDK</TabsTrigger>
-                  <TabsTrigger value="curl">cURL</TabsTrigger>
+                  <TabsTrigger value="python" className="space-mono-regular">Python SDK</TabsTrigger>
+                  <TabsTrigger value="curl" className="space-mono-regular">cURL</TabsTrigger>
                 </TabsList>
                 <TabsContent value="python" className="mt-0">
                   <CodeSnippet label="Python" code={pythonSnippet} language="python" />
@@ -350,22 +375,22 @@ export function ApiKeysTab() {
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle>Usage guidelines</CardTitle>
-          <CardDescription>Best practices for managing keys securely.</CardDescription>
+          <CardTitle className="space-mono-regular">Usage guidelines</CardTitle>
+          <CardDescription className="fira-mono-regular">Best practices for managing keys securely.</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" className="space-y-2">
             <AccordionItem value="usage">
-              <AccordionTrigger>How to use API keys</AccordionTrigger>
-              <AccordionContent>
+              <AccordionTrigger className="space-mono-regular">How to use API keys</AccordionTrigger>
+              <AccordionContent className="fira-mono-regular">
                 <p className="text-sm text-muted-foreground">
                   Include the <code className="rounded bg-muted px-1 py-0.5">Authorization: Bearer &lt;key&gt;</code> header in every request. Never expose keys in client-side code.
                 </p>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="security">
-              <AccordionTrigger>Security best practices</AccordionTrigger>
-              <AccordionContent>
+              <AccordionTrigger className="space-mono-regular">Security best practices</AccordionTrigger>
+              <AccordionContent className="fira-mono-regular">
                 <ul className="list-disc space-y-2 pl-4 text-sm text-muted-foreground">
                   <li>Rotate keys every 60 days.</li>
                   <li>Use separate keys for staging and production bots.</li>
@@ -374,8 +399,8 @@ export function ApiKeysTab() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="limits">
-              <AccordionTrigger>Rate limits</AccordionTrigger>
-              <AccordionContent>
+              <AccordionTrigger className="space-mono-regular">Rate limits</AccordionTrigger>
+              <AccordionContent className="fira-mono-regular">
                 <p className="text-sm text-muted-foreground">
                   Each key enforces its own per-minute cap. Configure limits during key creation to match your integration profile.
                 </p>
@@ -386,20 +411,32 @@ export function ApiKeysTab() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : resetDialog())}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Generate new API key</DialogTitle>
-            <DialogDescription>Keys are shown only once. Store them securely.</DialogDescription>
+            <DialogTitle className="space-mono-regular text-xl">Generate new API key</DialogTitle>
+            <DialogDescription className="fira-mono-regular">
+              Keys are shown only once. Store them securely to maintain access.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <Label>Name</Label>
-              <Input value={keyName} onChange={(event) => setKeyName(event.target.value)} placeholder="Integration name" />
+          <div className="grid gap-6 py-2">
+            <div className="grid gap-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Key Name
+              </Label>
+              <Input
+                value={keyName}
+                onChange={(event) => setKeyName(event.target.value)}
+                placeholder="e.g. Production Frontend"
+                className="h-10"
+              />
             </div>
-            <div className="space-y-1">
-              <Label>Chatbot</Label>
+
+            <div className="grid gap-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Associated Chatbot
+              </Label>
               <Select value={selectedBot} onValueChange={setSelectedBot}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select a chatbot" />
                 </SelectTrigger>
                 <SelectContent>
@@ -411,31 +448,41 @@ export function ApiKeysTab() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Permissions</Label>
-              <div className="space-y-3">
+
+            <div className="grid gap-3">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Permissions
+              </Label>
+              <div className="grid gap-3">
                 {PERMISSIONS.map((permission) => (
-                  <div key={permission.id} className="flex items-start gap-3 rounded-lg border p-3">
+                  <label
+                    key={permission.id}
+                    className="flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-all hover:bg-muted/50 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.02]"
+                  >
                     <Checkbox
                       id={`permission-${permission.id}`}
                       checked={permissions.includes(permission.id)}
                       onCheckedChange={() => handlePermissionToggle(permission.id)}
+                      className="mt-1 rounded-full"
                     />
-                    <div>
-                      <label htmlFor={`permission-${permission.id}`} className="text-sm font-medium">
-                        {permission.label}
-                      </label>
-                      <p className="text-xs text-muted-foreground">{permission.description}</p>
+                    <div className="grid gap-1.5">
+                      <span className="text-sm font-semibold leading-none">{permission.label}</span>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        {permission.description}
+                      </p>
                     </div>
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label>Expiration</Label>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  Expiration
+                </Label>
                 <Select value={expiration} onValueChange={setExpiration}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select expiration" />
                   </SelectTrigger>
                   <SelectContent>
@@ -447,34 +494,79 @@ export function ApiKeysTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label>Rate limit (requests/min)</Label>
-                <Input type="number" min="1" max="6000" value={rateLimit} onChange={(event) => setRateLimit(event.target.value)} />
+              <div className="grid gap-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  Rate Limit
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="6000"
+                    value={rateLimit}
+                    onChange={(event) => setRateLimit(event.target.value)}
+                    className="h-10 pr-12"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
+                    RPM
+                  </span>
+                </div>
               </div>
             </div>
+
             {generatedKey ? (
-              <Alert className="border-primary/40 bg-primary/10">
-                <AlertTitle>Save this key now</AlertTitle>
-                <AlertDescription className="flex items-center justify-between">
-                  <span className="font-mono text-sm">{generatedKey}</span>
-                  <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(generatedKey)}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              <div className="mt-2 space-y-3">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-primary/80">
+                  Your New Secret Key
+                </Label>
+                <div className="relative flex flex-col gap-2 rounded-xl border border-primary/20 bg-primary/[0.03] p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <code className="flex-1 break-all font-mono text-sm font-medium leading-relaxed text-primary">
+                      {generatedKey}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 hover:bg-primary/10 hover:text-primary"
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedKey)
+                        toast({ title: "Copied to clipboard" })
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="flex items-center gap-2 text-[11px] text-amber-600 font-medium bg-amber-50/50 p-2 rounded-md border border-amber-100/50">
+                  <ShieldAlert className="h-3 w-3" />
+                  Warning: This key will only be shown once.
+                </p>
+              </div>
             ) : (
-              <Alert variant="destructive">
-                <ShieldAlert className="h-4 w-4" />
-                <AlertTitle>Confidential</AlertTitle>
-                <AlertDescription>New keys are shown only once. Store them securely.</AlertDescription>
-              </Alert>
+              <div className="rounded-xl border border-dashed border-muted-foreground/20 p-4 bg-muted/5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/20">
+                    <ShieldAlert className="h-4 w-4 text-muted-foreground/60" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium">Security Notice</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      New keys are generated instantly and shown once.
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={resetDialog}>
+          <DialogFooter className="mt-4 gap-2 sm:gap-2">
+            <Button variant="outline" onClick={resetDialog} className="flex-1 sm:flex-none px-8">
               Cancel
             </Button>
-            <Button onClick={handleKeyCreation} disabled={!keyName || !selectedBot || isSubmitting}>
+            <Button
+              onClick={handleKeyCreation}
+              disabled={!keyName || !selectedBot || isSubmitting}
+              className="flex-1 sm:flex-none px-8 shadow-sm shadow-primary/20"
+            >
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate key
             </Button>

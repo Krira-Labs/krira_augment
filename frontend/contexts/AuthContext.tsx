@@ -193,7 +193,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       authService.clearAuth();
       setUser(null);
-      router.push('/');
+
+      if (typeof window !== 'undefined') {
+        const publicRoutes = ['/', '/login', '/signup', '/forgotpassword', '/resetpassword', '/verifyemail'];
+        const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
+
+        if (!isPublicRoute) {
+          router.push('/');
+        }
+      }
     }
   }, [router, stopTokenRefreshInterval]);
 
@@ -202,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       try {
         console.log('Initializing auth, checking for session...');
-        
+
         // First, try to refresh tokens (in case access token expired but refresh token is still valid)
         try {
           const refreshResponse = await authService.refreshToken();
@@ -213,11 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Refresh might fail if no valid session, that's okay
           console.log('Token refresh on init skipped (no existing session or expired)');
         }
-        
+
         // Now try to fetch user profile
         try {
           const response = await authService.getProfile();
-          
+
           if (response.success && response.user) {
             console.log('✓ User authenticated:', response.user.email);
             setUser(mapProfileToUser(response.user));

@@ -50,8 +50,8 @@ export function AccountSettingsTab() {
     <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>Choose what you want to hear about from Krira AI.</CardDescription>
+          <CardTitle className="space-mono-regular">Notifications</CardTitle>
+          <CardDescription className="fira-mono-regular">Choose what you want to hear about from Krira AI.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <PreferenceToggle
@@ -87,7 +87,7 @@ export function AccountSettingsTab() {
 
           <Separator />
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="space-mono-regular">
               {isSaving ? "Saving..." : "Save preferences"}
             </Button>
           </div>
@@ -97,16 +97,16 @@ export function AccountSettingsTab() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>
+            <CardTitle className="space-mono-regular">Appearance</CardTitle>
+            <CardDescription className="fira-mono-regular">
               Customize how Krira AI looks on your device.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between rounded-lg border bg-card/50 p-4">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Dark Mode</Label>
-                <p className="text-xs text-muted-foreground">
+                <Label className="text-sm font-medium space-mono-regular">Dark Mode</Label>
+                <p className="text-xs text-muted-foreground fira-mono-regular">
                   Switch between light and dark themes
                 </p>
               </div>
@@ -120,10 +120,10 @@ export function AccountSettingsTab() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Workspace controls</CardTitle>
-            <CardDescription>Update how Krira AI behaves for your team.</CardDescription>
+            <CardTitle className="space-mono-regular">Workspace controls</CardTitle>
+            <CardDescription className="fira-mono-regular">Update how Krira AI behaves for your team.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <CardContent className="space-y-3 text-sm text-muted-foreground fira-mono-regular">
             <p>• Workspace language and timezone can be configured from the organisation console.</p>
             <p>• Need granular permissions? Contact support to enable role-based access.
             </p>
@@ -146,8 +146,8 @@ function PreferenceToggle({ label, description, checked, onCheckedChange }: Pref
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border bg-card/50 p-4">
       <div>
-        <Label className="text-sm font-medium leading-none">{label}</Label>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <Label className="text-sm font-medium leading-none space-mono-regular">{label}</Label>
+        <p className="mt-1 text-xs text-muted-foreground fira-mono-regular">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>

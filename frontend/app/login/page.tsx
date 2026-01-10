@@ -3,12 +3,19 @@ import Login from "@/components/login";
 
 
 
-export default function signup(){
-    return(
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Login",
+    description: "Sign in to your Krira Augment account to manage your RAG pipelines and analytics.",
+};
+
+export default function signup() {
+    return (
         <div>
-            
-            <Login/>
-            
+
+            <Login />
+
         </div>
     )
 }

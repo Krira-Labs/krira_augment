@@ -151,7 +151,7 @@ export function TrainLLMTab() {
   const [evaluationRows, setEvaluationRows] = React.useState<EvaluationRow[]>([])
   const [evaluationJustifications, setEvaluationJustifications] = React.useState<MetricJustifications>({})
   const [selectedResult, setSelectedResult] = React.useState<EvaluationRow | null>(null)
-  
+
   const [appearance, setAppearance] = React.useState<AppearanceConfig>({
     primary: "#2563eb",
     accent: "#60a5fa",
@@ -177,13 +177,13 @@ export function TrainLLMTab() {
     customWatermark: "",
     logo: null,
   })
-  
+
   const [activePreviewDevice, setActivePreviewDevice] = React.useState("desktop")
   const [deploymentTab, setDeploymentTab] = React.useState("python")
 
   const searchParams = useSearchParams()
   const editId = searchParams.get('editId')
-  
+
   const [chatbotId, setChatbotId] = React.useState<string | null>(null)
   const [isChatbotCompleted, setIsChatbotCompleted] = React.useState(false)
   const [isFinalizingChatbot, setIsFinalizingChatbot] = React.useState(false)
@@ -200,7 +200,7 @@ export function TrainLLMTab() {
 
   const restoreChatbotState = React.useCallback((chatbot: Chatbot, startStep: number | null = null) => {
     const pipelineCompleted = Boolean(chatbot.isCompleted || chatbot.status === "active")
-    
+
     // Set edit mode and chatbot ID
     setIsEditMode(true)
     setChatbotId(chatbot._id)
@@ -213,7 +213,7 @@ export function TrainLLMTab() {
       if (chatbot.dataset.type) {
         setDatasetType(chatbot.dataset.type as DatasetType)
       }
-      
+
       // Create preview results from saved files
       if (chatbot.dataset.files && chatbot.dataset.files.length > 0) {
         const filePreviewResults: PreviewDatasetResult[] = chatbot.dataset.files.map((file, idx) => ({
@@ -232,7 +232,7 @@ export function TrainLLMTab() {
         setPreviewResults(filePreviewResults)
         setShowPreview(true)
       }
-      
+
       // Handle URLs
       if (chatbot.dataset.urls && chatbot.dataset.urls.length > 0) {
         setWebsiteUrls(chatbot.dataset.urls)
@@ -265,17 +265,17 @@ export function TrainLLMTab() {
         const persistedDatasets = chatbot.embedding.datasets ?? []
         const datasetSummaries = persistedDatasets.length > 0
           ? persistedDatasets.map((dataset, idx) => ({
-              dataset_id: dataset.id || `dataset-${idx}`,
-              label: dataset.label || `Dataset ${idx + 1}`,
-              chunks_processed: dataset.chunksProcessed ?? dataset.chunksEmbedded ?? 0,
-              chunks_embedded: dataset.chunksEmbedded ?? dataset.chunksProcessed ?? 0,
-            }))
+            dataset_id: dataset.id || `dataset-${idx}`,
+            label: dataset.label || `Dataset ${idx + 1}`,
+            chunks_processed: dataset.chunksProcessed ?? dataset.chunksEmbedded ?? 0,
+            chunks_embedded: dataset.chunksEmbedded ?? dataset.chunksProcessed ?? 0,
+          }))
           : chatbot.dataset?.files?.map((f, idx) => ({
-              dataset_id: f.datasetId || `file-${idx}`,
-              label: f.name,
-              chunks_processed: f.chunks || 0,
-              chunks_embedded: f.chunks || 0,
-            })) || []
+            dataset_id: f.datasetId || `file-${idx}`,
+            label: f.name,
+            chunks_processed: f.chunks || 0,
+            chunks_embedded: f.chunks || 0,
+          })) || []
 
         setEmbeddingSummary({
           results: datasetSummaries.map((summary) => ({
@@ -335,7 +335,7 @@ export function TrainLLMTab() {
         else if (chatbot.dataset?.files?.length || chatbot.dataset?.urls?.length) calculatedStep = 2 // Ready for embed
         else calculatedStep = 1 // Created, ready for upload
       }
-      
+
       setActiveStep(calculatedStep)
       setMaxUnlockedStep(pipelineCompleted ? FINAL_STEP_INDEX : calculatedStep)
     }
@@ -411,34 +411,34 @@ export function TrainLLMTab() {
     setIsCreatingChatbot(true)
     try {
       const response = await chatbotService.createChatbot({ name: trimmedName })
-      
+
       // Check if we got a full chatbot object with existing state (Resume Flow)
       // A new chatbot has empty dataset/embedding/llm usually, or we can check createdAt vs now
       const datasetFileCount = response.dataset?.files?.length ?? 0
       const hasDatasetFiles = datasetFileCount > 0
       const isResumed = hasDatasetFiles || response.embedding?.isEmbedded || response.llm?.model
-      
+
       if (isResumed || response.status === "active" || response._id) {
         // If the backend returned a bot that looks 'used', or simply if we have an ID
         // The backend logic we added returns the existing bot object if name matches.
-        
+
         // Let's assume if it has an ID, we use it.
         // But specifically for the "Resume" Toast:
         if (hasDatasetFiles || response.embedding?.isEmbedded) {
-             toast({ title: "Pipeline Resumed", description: `Loaded existing progress for "${response.name}"` })
-             restoreChatbotState(response) // Auto-calculate step
+          toast({ title: "Pipeline Resumed", description: `Loaded existing progress for "${response.name}"` })
+          restoreChatbotState(response) // Auto-calculate step
         } else {
-             // Likely a fresh bot or empty draft
-             setChatbotId(response._id)
-             setIsChatbotCompleted(Boolean(response.isCompleted))
-             toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
-             
-             // If it's a fresh bot (draft), we treat it as "Created"
-             // Set active step to 1 (Upload)
-             setActiveStep(1)
-             setMaxUnlockedStep((prev) => Math.max(prev, 1))
-             setIsEditMode(true) // Switch to edit mode so future saves work
-             setChatbotNameInput(response.name)
+          // Likely a fresh bot or empty draft
+          setChatbotId(response._id)
+          setIsChatbotCompleted(Boolean(response.isCompleted))
+          toast({ title: "Chatbot created", description: `Started training pipeline for ${response.name}` })
+
+          // If it's a fresh bot (draft), we treat it as "Created"
+          // Set active step to 1 (Upload)
+          setActiveStep(1)
+          setMaxUnlockedStep((prev) => Math.max(prev, 1))
+          setIsEditMode(true) // Switch to edit mode so future saves work
+          setChatbotNameInput(response.name)
         }
       }
 
@@ -475,7 +475,7 @@ export function TrainLLMTab() {
         `/chatbots/${chatbotId}`,
         data
       );
-      
+
       console.log("Update successful:", response);
       toast({ title: "Progress saved" });
     } catch (error) {
@@ -662,7 +662,7 @@ export function TrainLLMTab() {
       setEvaluationMetrics(data.metrics ?? null)
       setEvaluationRows(Array.isArray(data.rows) ? data.rows : [])
       setEvaluationJustifications(data.justifications ?? {})
-      
+
       // Save evaluation results to MongoDB
       if (chatbotId) {
         const evaluationPayload: NonNullable<UpdateChatbotData["evaluation"]> = {
@@ -683,7 +683,7 @@ export function TrainLLMTab() {
           evaluation: evaluationPayload
         })
       }
-      
+
       toast({ title: "Evaluation complete", description: "Generated scores from your evaluation dataset." })
     } catch (error) {
       const message = error instanceof ApiError
@@ -1221,14 +1221,14 @@ export function TrainLLMTab() {
       toast({ title: "Empty prompt", description: "Please enter a system prompt before saving." })
       return
     }
-    
+
     // Add to local history (keep max 5 unique prompts)
     setPromptHistory((prev) => {
       const newHistory = Array.from(new Set([systemPrompt.trim(), ...prev])).slice(0, 5)
       return newHistory
     })
     setSelectedPromptHistory(systemPrompt.trim())
-    
+
     // Save to backend if chatbot exists
     if (chatbotId) {
       try {
@@ -1330,7 +1330,7 @@ export function TrainLLMTab() {
         api_key: pineconeKey.trim(),
         index_name: indexName.trim(),
       }
-    } 
+    }
 
     try {
       const response = await apiClient.post<LLMTestResponsePayload>(
@@ -1344,37 +1344,37 @@ export function TrainLLMTab() {
 
       const safeContext: RetrievedContextEntry[] = Array.isArray(data.context)
         ? data.context.map((rawEntry) => {
-            const textValue = (rawEntry as { text?: unknown })?.text
-            const text = typeof textValue === "string" ? textValue : String(textValue ?? "")
+          const textValue = (rawEntry as { text?: unknown })?.text
+          const text = typeof textValue === "string" ? textValue : String(textValue ?? "")
 
-            const scoreValue = (rawEntry as { score?: unknown })?.score
-            const score = (() => {
-              if (typeof scoreValue === "number") {
-                return scoreValue
-              }
-              if (typeof scoreValue === "string") {
-                const parsed = Number.parseFloat(scoreValue)
-                return Number.isNaN(parsed) ? null : parsed
-              }
-              return null
-            })()
-
-            const metadataValue = (rawEntry as { metadata?: unknown })?.metadata
-            const metadata =
-              metadataValue && typeof metadataValue === "object" && !Array.isArray(metadataValue)
-                ? (metadataValue as Record<string, unknown>)
-                : {}
-
-            return {
-              text,
-              score,
-              metadata,
+          const scoreValue = (rawEntry as { score?: unknown })?.score
+          const score = (() => {
+            if (typeof scoreValue === "number") {
+              return scoreValue
             }
-          })
+            if (typeof scoreValue === "string") {
+              const parsed = Number.parseFloat(scoreValue)
+              return Number.isNaN(parsed) ? null : parsed
+            }
+            return null
+          })()
+
+          const metadataValue = (rawEntry as { metadata?: unknown })?.metadata
+          const metadata =
+            metadataValue && typeof metadataValue === "object" && !Array.isArray(metadataValue)
+              ? (metadataValue as Record<string, unknown>)
+              : {}
+
+          return {
+            text,
+            score,
+            metadata,
+          }
+        })
         : []
 
       setTestContext(safeContext)
-      
+
       // Save test result to MongoDB
       if (chatbotId) {
         try {
@@ -1389,7 +1389,7 @@ export function TrainLLMTab() {
           // Don't show error to user, just log it
         }
       }
-      
+
       toast({ title: "LLM test successful", description: "Generated a response using your configured model." })
     } catch (error) {
       let message = "Unable to execute LLM test"
@@ -1465,10 +1465,10 @@ export function TrainLLMTab() {
         toast({ title: "No datasets", description: "Please upload and preview at least one dataset." })
         return
       }
-      
+
       // Save Dataset State - only name, size, and chunks count
       const currentFileUploads = fileUploads[datasetType as FileDatasetType] || [];
-      
+
       const files = successfulPreviews
         .filter(p => p.source !== "website")
         .map(p => {
@@ -1492,7 +1492,7 @@ export function TrainLLMTab() {
           urls: urls,
         }
       }
-      
+
       console.log("Saving dataset state:", JSON.stringify(datasetState, null, 2));
       await updateChatbotState(datasetState)
     }
@@ -1582,29 +1582,29 @@ export function TrainLLMTab() {
     setActiveStep(nextStep)
     setMaxUnlockedStep((prev) => Math.max(prev, nextStep))
   }, [
-    activeStep, 
+    activeStep,
     isEditMode,
-    handleCreateChatbot, 
-    previewResults, 
-    datasetType, 
-    fileUploads, 
-    updateChatbotState, 
-    embeddingSummary, 
-    isEmbedding, 
+    handleCreateChatbot,
+    previewResults,
+    datasetType,
+    fileUploads,
+    updateChatbotState,
+    embeddingSummary,
+    isEmbedding,
     currentEmbeddingDimension,
-    selectedModel, 
-    vectorStore, 
-    pineconeKey, 
-    indexName, 
-    model, 
-    provider, 
-    chunksToRetrieve, 
-    systemPrompt, 
-    evaluationCsv, 
-    evaluationMetrics, 
-    evaluationRows, 
-    evaluationJustifications, 
-    finalizeChatbot, 
+    selectedModel,
+    vectorStore,
+    pineconeKey,
+    indexName,
+    model,
+    provider,
+    chunksToRetrieve,
+    systemPrompt,
+    evaluationCsv,
+    evaluationMetrics,
+    evaluationRows,
+    evaluationJustifications,
+    finalizeChatbot,
     toast
   ])
 
@@ -1628,7 +1628,7 @@ export function TrainLLMTab() {
     }
 
     setIsSavingDraft(true)
-    
+
     try {
       // Build the update payload based on current step
       const updatePayload: UpdateChatbotData = {}
@@ -1775,14 +1775,14 @@ export function TrainLLMTab() {
               />
             </section>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} className="space-mono-regular">
                 Back to Chatbot
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft}>
+                <Button variant="outline" onClick={handleSaveDraft} className="space-mono-regular">
                   Save draft
                 </Button>
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} className="space-mono-regular">
                   Next: Configure Embedding
                 </Button>
               </div>
@@ -1814,14 +1814,14 @@ export function TrainLLMTab() {
               isPaidPlan={planAccess.isPaid}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} className="space-mono-regular">
                 Back to upload
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft}>
+                <Button variant="outline" onClick={handleSaveDraft} className="space-mono-regular">
                   Save draft
                 </Button>
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} className="space-mono-regular">
                   Next: Choose LLM
                 </Button>
               </div>
@@ -1859,14 +1859,14 @@ export function TrainLLMTab() {
               isPaidPlan={planAccess.isPaid}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} className="space-mono-regular">
                 Back to embedding
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft}>
+                <Button variant="outline" onClick={handleSaveDraft} className="space-mono-regular">
                   Save draft
                 </Button>
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} className="space-mono-regular">
                   Next: Test & Evaluate
                 </Button>
               </div>
@@ -1893,14 +1893,14 @@ export function TrainLLMTab() {
               onSelectResult={setSelectedResult}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} className="space-mono-regular">
                 Back to LLM setup
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft}>
+                <Button variant="outline" onClick={handleSaveDraft} className="space-mono-regular">
                   Save draft
                 </Button>
-                <Button onClick={handleNext} disabled={isFinalizingChatbot} className="gap-2">
+                <Button onClick={handleNext} disabled={isFinalizingChatbot} className="gap-2 space-mono-regular">
                   {isFinalizingChatbot ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1934,10 +1934,10 @@ export function TrainLLMTab() {
               chatbotId={chatbotId || undefined}
             />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} className="space-mono-regular">
                 Back to evaluation
               </Button>
-              <Button variant="outline" onClick={handleSaveDraft}>
+              <Button variant="outline" onClick={handleSaveDraft} className="space-mono-regular">
                 Save draft
               </Button>
             </div>

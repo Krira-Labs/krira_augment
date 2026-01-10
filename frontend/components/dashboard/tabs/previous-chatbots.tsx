@@ -51,7 +51,7 @@ import { chatbotService, type Chatbot } from "@/lib/api/chatbot.service"
 
 type ChatbotStatus = "active" | "inactive" | "draft"
 
-export function PreviousChatbotsTab() {
+export function PreviousPipelinesTab() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -76,7 +76,7 @@ export function PreviousChatbotsTab() {
       console.error("Failed to load chatbots:", error)
       const description = error instanceof Error ? error.message : "Failed to fetch your chatbots"
       toast({
-        title: "Error loading chatbots",
+        title: "Error loading RAG pipelines",
         description,
       })
     } finally {
@@ -110,7 +110,7 @@ export function PreviousChatbotsTab() {
       await chatbotService.deleteChatbot(deleteChatbot._id)
 
       toast({
-        title: "Chatbot deleted",
+        title: "RAG pipeline deleted",
         description: `${deleteChatbot.name} has been deleted successfully`,
       })
 
@@ -414,29 +414,29 @@ export function PreviousChatbotsTab() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold">Your Chatbots</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-2xl font-semibold space-mono-regular whitespace-nowrap">Deployments</h2>
+          <p className="text-sm text-muted-foreground fira-mono-regular">
             Manage active assistants, edit configurations, and iterate quickly.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => router.push("/dashboard?tab=train-llm")}>
-          <FileText className="h-4 w-4" /> Create new chatbot
+        <Button className="gap-2 space-mono-regular" onClick={() => router.push("/dashboard?tab=train-llm")}>
+          <FileText className="h-4 w-4" /> Create new RAG pipeline
         </Button>
       </header>
 
       {showCancellationNotice && (
         <Alert variant="default" className="flex flex-col gap-3 rounded-xl border border-amber-300/70 bg-amber-50 p-4 text-amber-900 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
           <div>
-            <AlertTitle className="text-base font-semibold">Delete chatbots before cancelling</AlertTitle>
-            <AlertDescription>
-              Remove {requiredCancellationCount} chatbot{requiredCancellationCount === 1 ? "" : "s"} to return to the Free plan.
+            <AlertTitle className="text-base font-semibold space-mono-regular">Delete RAG pipelines before cancelling</AlertTitle>
+            <AlertDescription className="fira-mono-regular">
+              Remove {requiredCancellationCount} RAG pipeline{requiredCancellationCount === 1 ? "" : "s"} to return to the Free plan.
             </AlertDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleBackToPricing}>
+            <Button variant="outline" size="sm" onClick={handleBackToPricing} className="space-mono-regular">
               Back to pricing
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleDismissCancellationNotice}>
+            <Button variant="ghost" size="sm" onClick={handleDismissCancellationNotice} className="space-mono-regular">
               Dismiss
             </Button>
           </div>
@@ -448,9 +448,10 @@ export function PreviousChatbotsTab() {
           <div className="flex w-full items-center gap-2 lg:max-w-sm">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search chatbots"
+              placeholder="Search RAG pipelines"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
+              className="fira-mono-regular"
             />
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -482,16 +483,16 @@ export function PreviousChatbotsTab() {
       {sortedChatbots.length === 0 ? (
         <Card className="border-dashed py-12 text-center">
           <CardHeader>
-            <CardTitle>No chatbots {searchTerm || statusFilter !== "all" ? "found" : "yet"}</CardTitle>
-            <CardDescription>
+            <CardTitle className="space-mono-regular">No RAG pipelines {searchTerm || statusFilter !== "all" ? "found" : "yet"}</CardTitle>
+            <CardDescription className="fira-mono-regular">
               {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your filters"
-                : "Create your first assistant to see it here"}
+                : "Create your first pipeline to see it here"}
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
-            <Button onClick={() => router.push("/dashboard?tab=train-llm")}>
-              Create your first chatbot
+            <Button onClick={() => router.push("/dashboard?tab=train-llm")} className="space-mono-regular">
+              Create your first RAG pipeline
             </Button>
           </CardFooter>
         </Card>
@@ -519,31 +520,31 @@ export function PreviousChatbotsTab() {
       }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader className="space-y-3">
-            <AlertDialogTitle className="text-xl">Delete chatbot?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl space-mono-regular">Delete RAG pipeline?</AlertDialogTitle>
+            <AlertDialogDescription className="fira-mono-regular">
               This action cannot be undone. This will permanently delete{" "}
               <span className="font-semibold text-foreground">{deleteChatbot?.name}</span> and all its data.
             </AlertDialogDescription>
             <div className="space-y-2">
-              <label htmlFor="confirm-name" className="text-sm font-medium text-foreground">
+              <label htmlFor="confirm-name" className="text-sm font-medium text-foreground space-mono-regular">
                 Type <span className="font-mono font-semibold">{deleteChatbot?.name}</span> to confirm:
               </label>
               <Input
                 id="confirm-name"
                 value={deleteConfirmName}
                 onChange={(e) => setDeleteConfirmName(e.target.value)}
-                placeholder="Enter chatbot name"
+                placeholder="Enter pipeline name"
                 disabled={isDeleting}
-                className="font-mono"
+                className="font-mono fira-mono-regular"
               />
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 sm:gap-3 flex-col sm:flex-row">
-            <AlertDialogCancel disabled={isDeleting} className="mt-0 w-full sm:w-auto">
+            <AlertDialogCancel disabled={isDeleting} className="mt-0 w-full sm:w-auto space-mono-regular">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mt-0 w-full sm:w-auto px-4 py-2"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mt-0 w-full sm:w-auto px-4 py-2 space-mono-regular"
               onClick={handleDeleteChatbot}
               disabled={isDeleting || deleteConfirmName !== deleteChatbot?.name}
             >
@@ -556,7 +557,7 @@ export function PreviousChatbotsTab() {
                 ) : (
                   <>
                     <Trash2 className="h-4 w-4" />
-                    <span>Delete Chatbot</span>
+                    <span>Delete RAG Pipeline</span>
                   </>
                 )}
               </div>
@@ -601,8 +602,8 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
     <Card className="flex h-full flex-col border-border/60">
       <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
-          <CardTitle className="text-lg font-semibold">{chatbot.name}</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
+          <CardTitle className="text-lg font-semibold space-mono-regular">{chatbot.name}</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground fira-mono-regular">
             Created {createdDate} · Updated {updatedDate}
           </CardDescription>
         </div>
@@ -617,7 +618,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onEdit}>
               <Edit2 className="mr-2 h-4 w-4" />
-              Edit chatbot
+              Edit pipeline
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={onDelete}>
@@ -631,7 +632,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <StatusBadge status={status} />
           {totalChunks > 0 && (
-            <Badge variant="secondary">{totalChunks.toLocaleString()} chunks</Badge>
+            <Badge variant="secondary" className="fira-mono-regular">{totalChunks.toLocaleString()} chunks</Badge>
           )}
         </div>
 
@@ -639,8 +640,8 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
           {/* LLM Provider and Model */}
           {llmInfo?.model && (
             <div className="text-sm">
-              <span className="font-medium text-foreground">Model: </span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-foreground space-mono-regular">Model: </span>
+              <span className="text-muted-foreground fira-mono-regular">
                 {llmInfo.provider} · {llmInfo.model}
               </span>
             </div>
@@ -650,20 +651,20 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
           {datasetInfo && (
             <div className="space-y-1.5">
               <div className="text-sm">
-                <span className="font-medium text-foreground">Dataset: </span>
+                <span className="font-medium text-foreground space-mono-regular">Dataset: </span>
                 {datasetInfo.files && datasetInfo.files.length > 0 ? (
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground fira-mono-regular">
                     {datasetInfo.files[0].name}
                   </span>
                 ) : datasetInfo.urls && datasetInfo.urls.length > 0 ? (
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground fira-mono-regular">
                     {datasetInfo.urls[0]}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">No data</span>
+                  <span className="text-muted-foreground fira-mono-regular">No data</span>
                 )}
               </div>
-              <div className="text-xs text-muted-foreground pl-[68px]">
+              <div className="text-xs text-muted-foreground pl-[68px] fira-mono-regular">
                 Type: {datasetInfo.type?.toUpperCase() || 'Unknown'}
               </div>
             </div>
@@ -672,7 +673,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
           {/* Embedding Model with Logo */}
           {embeddingInfo?.model && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-foreground">Embedding:</span>
+              <span className="font-medium text-foreground space-mono-regular">Embedding:</span>
               <div className="flex items-center gap-1.5">
                 <Image
                   src={getEmbeddingLogo(embeddingInfo.model)}
@@ -681,7 +682,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
                   height={16}
                   className="rounded"
                 />
-                <span className="text-muted-foreground">{embeddingInfo.model}</span>
+                <span className="text-muted-foreground fira-mono-regular">{embeddingInfo.model}</span>
               </div>
             </div>
           )}
@@ -689,7 +690,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
           {/* Vector Store with Logo */}
           {embeddingInfo?.vectorStore && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium text-foreground">Vector Store:</span>
+              <span className="font-medium text-foreground space-mono-regular">Vector Store:</span>
               <div className="flex items-center gap-1.5">
                 <Image
                   src={getVectorStoreLogo(embeddingInfo.vectorStore)}
@@ -698,7 +699,7 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
                   height={16}
                   className="rounded"
                 />
-                <span className="text-muted-foreground">{embeddingInfo.vectorStore}</span>
+                <span className="text-muted-foreground fira-mono-regular">{embeddingInfo.vectorStore}</span>
               </div>
             </div>
           )}
@@ -706,8 +707,8 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
           {/* System Prompt */}
           {llmInfo?.systemPrompt && (
             <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground mb-2">System prompt</p>
-              <div className="max-h-[100px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40">
+              <p className="font-medium text-foreground mb-2 space-mono-regular">System prompt</p>
+              <div className="max-h-[100px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 fira-mono-regular">
                 <p className="whitespace-pre-wrap">{llmInfo.systemPrompt}</p>
               </div>
             </div>
@@ -716,18 +717,18 @@ function ChatbotCard({ chatbot, status, onEdit, onDelete, onExport, onPlayground
       </CardContent>
       <CardFooter className="mt-auto flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2" onClick={onEdit}>
+          <Button variant="outline" size="sm" className="gap-2 space-mono-regular" onClick={onEdit}>
             <Edit2 className="h-4 w-4" />
             Edit
           </Button>
           {status === "active" && (
-            <Button variant="default" size="sm" className="gap-2" onClick={onPlayground}>
+            <Button variant="default" size="sm" className="gap-2 space-mono-regular" onClick={onPlayground}>
               <MessageCircle className="h-4 w-4" />
               Playground
             </Button>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="gap-2" onClick={onExport}>
+        <Button variant="ghost" size="sm" className="gap-2 space-mono-regular" onClick={onExport}>
           <Download className="h-4 w-4" /> Export
         </Button>
       </CardFooter>
@@ -741,7 +742,7 @@ function StatusBadge({ status }: { status: ChatbotStatus }) {
   if (status === "active") {
     return (
       <Badge
-        className="bg-green-50 text-green-700 border-green-600 hover:bg-green-100 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+        className="bg-green-50 text-green-700 border-green-600 hover:bg-green-100 dark:bg-green-950 dark:text-green-300 dark:border-green-800 fira-mono-regular"
       >
         {label}
       </Badge>
@@ -751,14 +752,14 @@ function StatusBadge({ status }: { status: ChatbotStatus }) {
   if (status === "inactive") {
     return (
       <Badge
-        className="bg-red-50 text-red-700 border-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+        className="bg-red-50 text-red-700 border-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:border-red-800 fira-mono-regular"
       >
         {label}
       </Badge>
     )
   }
 
-  return <Badge variant="outline">{label}</Badge>
+  return <Badge variant="outline" className="fira-mono-regular">{label}</Badge>
 }
 
 // Helper functions to get provider logos

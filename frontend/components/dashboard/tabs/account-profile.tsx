@@ -44,50 +44,53 @@ export function AccountProfileTab() {
       <Card>
         <form onSubmit={handleSubmit} className="space-y-6">
           <CardHeader>
-            <CardTitle>Personal information</CardTitle>
-            <CardDescription>
+            <CardTitle className="space-mono-regular">Personal information</CardTitle>
+            <CardDescription className="fira-mono-regular">
               Update how your profile appears across the dashboard and customer-facing experiences.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-2">
-              <Label htmlFor="full-name">Full name</Label>
+              <Label htmlFor="full-name" className="space-mono-regular">Full name</Label>
               <Input
                 id="full-name"
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
                 placeholder="John Carter"
                 required
+                className="fira-mono-regular"
               />
             </div>
             <div className="grid gap-2">
-              <Label>Email address</Label>
-              <Input value={user?.email ?? ""} disabled className="bg-muted" />
+              <Label className="space-mono-regular">Email address</Label>
+              <Input value={user?.email ?? ""} disabled className="bg-muted fira-mono-regular" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="headline">Headline</Label>
+              <Label htmlFor="headline" className="space-mono-regular">Headline</Label>
               <Input
                 id="headline"
                 value={headline}
                 onChange={(event) => setHeadline(event.target.value)}
                 placeholder="AI Product Lead"
+                className="fira-mono-regular"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="bio">About you</Label>
+              <Label htmlFor="bio" className="space-mono-regular">About you</Label>
               <Textarea
                 id="bio"
                 value={bio}
                 onChange={(event) => setBio(event.target.value)}
                 placeholder="Write a short introduction that highlights your goals with Krira AI."
                 rows={5}
+                className="fira-mono-regular"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground fira-mono-regular">
                 This information is shared with teammates and collaborators inside your workspace.
               </p>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" disabled={isSaving} className="space-mono-regular">
                 {isSaving ? "Saving..." : "Save changes"}
               </Button>
             </div>
@@ -98,31 +101,31 @@ export function AccountProfileTab() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Account overview</CardTitle>
-            <CardDescription>Quick stats pulled from your subscription and usage.</CardDescription>
+            <CardTitle className="space-mono-regular">Account overview</CardTitle>
+            <CardDescription className="fira-mono-regular">Quick stats pulled from your subscription and usage.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm">
+          <CardContent className="space-y-4 text-sm fira-mono-regular">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Role</span>
-              <span className="font-medium capitalize">{user?.role ?? "user"}</span>
+              <span className="font-medium capitalize space-mono-regular">{user?.role ?? "user"}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Verification</span>
-              <span className="font-medium">{user?.isVerified ? "Verified" : "Pending"}</span>
+              <span className="font-medium space-mono-regular">{user?.isVerified ? "Verified" : "Pending"}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Plan</span>
-              <span className="font-medium">{user?.plan ?? "free"}</span>
+              <span className="font-medium space-mono-regular">{user?.plan ?? "free"}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Security tips</CardTitle>
-            <CardDescription>Keep your account resilient.</CardDescription>
+            <CardTitle className="space-mono-regular">Security tips</CardTitle>
+            <CardDescription className="fira-mono-regular">Keep your account resilient.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <CardContent className="space-y-3 text-sm text-muted-foreground fira-mono-regular">
             <p>• Enable two-factor authentication (coming soon) for another layer of protection.</p>
             <p>• Use a unique password that you don&apos;t share with other services.</p>
             <p>• Review active sessions regularly and sign out from unfamiliar devices.</p>

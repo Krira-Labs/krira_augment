@@ -1,5 +1,6 @@
+
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Settings2, Sparkles, Zap } from 'lucide-react'
+import { Cpu, Scissors, Search } from 'lucide-react'
 import { ReactNode } from 'react'
 
 export default function Features() {
@@ -7,58 +8,66 @@ export default function Features() {
         <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent">
             <div className="@container mx-auto max-w-5xl px-6">
                 <div className="text-center">
-                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl">Built to cover your needs</h2>
-                    <p className="mt-4">Libero sapiente aliquam quibusdam aspernatur, praesentium iusto repellendus.</p>
+                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl space-mono-regular">Enterprise-Grade Infrastructure</h2>
+                    <p className="mt-4 text-muted-foreground space-mono-regular max-w-2xl mx-auto">
+                        Everything you need to build, scale, and optimize your production RAG pipelines with precision.
+                    </p>
                 </div>
-                <div className="@min-4xl:max-w-full @min-4xl:grid-cols-3 mx-auto mt-8 grid max-w-sm gap-6 *:text-center md:mt-16">
-                    <Card className="group shadow-zinc-950/5">
+                <div className="@min-4xl:max-w-full @min-4xl:grid-cols-3 mx-auto mt-12 grid max-w-sm gap-6 *:text-center md:max-w-none md:grid-cols-3 md:mt-16">
+                    <Card className="group shadow-zinc-950/5 hover:shadow-zinc-950/10 dark:hover:shadow-white/5 transition-all duration-300 border-zinc-200 dark:border-zinc-800">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Zap
-                                    className="size-6"
+                                <Scissors
+                                    className="size-6 text-foreground"
                                     aria-hidden
                                 />
                             </CardDecorator>
 
-                            <h3 className="mt-6 font-medium">Customizable</h3>
+                            <h3 className="mt-6 font-bold space-mono-regular text-lg">High Performance Chunking</h3>
                         </CardHeader>
 
                         <CardContent>
-                            <p className="text-sm">Extensive customization options, allowing you to tailor every aspect to meet your specific needs.</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                Advanced splitting strategies with automated data cleaning to preserve meaningful context at scale.
+                            </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="group shadow-zinc-950/5">
+                    <Card className="group shadow-zinc-950/5 hover:shadow-zinc-950/10 dark:hover:shadow-white/5 transition-all duration-300 border-zinc-200 dark:border-zinc-800">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Settings2
-                                    className="size-6"
+                                <Cpu
+                                    className="size-6 text-foreground"
                                     aria-hidden
                                 />
                             </CardDecorator>
 
-                            <h3 className="mt-6 font-medium">You have full control</h3>
+                            <h3 className="mt-6 font-bold space-mono-regular text-lg">GPU-Accelerated Embeddings</h3>
                         </CardHeader>
 
                         <CardContent>
-                            <p className="mt-3 text-sm">From design elements to functionality, you have complete control to create a unique and personalized experience.</p>
+                            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                                Lightning-fast vector generation with native GPU support for high-throughput embedding processing.
+                            </p>
                         </CardContent>
                     </Card>
 
-                    <Card className="group shadow-zinc-950/5">
+                    <Card className="group shadow-zinc-950/5 hover:shadow-zinc-950/10 dark:hover:shadow-white/5 transition-all duration-300 border-zinc-200 dark:border-zinc-800">
                         <CardHeader className="pb-3">
                             <CardDecorator>
-                                <Sparkles
-                                    className="size-6"
+                                <Search
+                                    className="size-6 text-foreground"
                                     aria-hidden
                                 />
                             </CardDecorator>
 
-                            <h3 className="mt-6 font-medium">Powered By AI</h3>
+                            <h3 className="mt-6 font-bold space-mono-regular text-lg">High Level Retrieval</h3>
                         </CardHeader>
 
                         <CardContent>
-                            <p className="mt-3 text-sm">Elements to functionality, you have complete control to create a unique experience.</p>
+                            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                                State-of-the-art retrieval algorithms optimized for semantic accuracy, speed, and relevance ranking.
+                            </p>
                         </CardContent>
                     </Card>
                 </div>

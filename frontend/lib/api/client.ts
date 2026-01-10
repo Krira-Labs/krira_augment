@@ -176,7 +176,9 @@ class ApiClient {
         error.status === 401 && 
         endpoint !== API_ENDPOINTS.AUTH.REFRESH_TOKEN &&
         endpoint !== API_ENDPOINTS.AUTH.LOGIN &&
-        endpoint !== API_ENDPOINTS.AUTH.LOGOUT
+        endpoint !== API_ENDPOINTS.AUTH.LOGOUT &&
+        endpoint !== API_ENDPOINTS.AUTH.FORGOT_PASSWORD &&
+        !endpoint.startsWith('/auth/resetpassword/')
       ) {
         if (this.isRefreshing) {
           return new Promise((resolve, reject) => {

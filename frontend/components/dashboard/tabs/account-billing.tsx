@@ -52,16 +52,16 @@ export function AccountBillingTab() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div>
-            <CardTitle>Current plan</CardTitle>
-            <CardDescription>Manage subscriptions and review your allowance.</CardDescription>
+            <CardTitle className="space-mono-regular">Current plan</CardTitle>
+            <CardDescription className="fira-mono-regular">Manage subscriptions and review your allowance.</CardDescription>
           </div>
-          <Badge variant="outline" className="text-sm capitalize">
+          <Badge variant="outline" className="text-sm capitalize fira-mono-regular">
             {user?.plan ?? "free"}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <p className="text-sm text-muted-foreground">Usage summary</p>
+            <p className="text-sm text-muted-foreground fira-mono-regular">Usage summary</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <UsageStat label="Chatbots" value={`${user?.chatbotsCreated ?? 0}/${user?.chatbotLimit ?? 1}`} />
               <UsageStat label="Questions" value={`${user?.questionsUsed ?? 0}/${user?.questionLimit ?? 30}`} />
@@ -72,8 +72,8 @@ export function AccountBillingTab() {
           <Separator />
 
           <div>
-            <p className="text-sm font-medium">Plan benefits</p>
-            <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+            <p className="text-sm font-medium space-mono-regular">Plan benefits</p>
+            <ul className="mt-2 space-y-2 text-sm text-muted-foreground fira-mono-regular">
               {benefits.map((benefit) => (
                 <li key={benefit}>• {benefit}</li>
               ))}
@@ -81,10 +81,10 @@ export function AccountBillingTab() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={handleManageBilling} variant="outline">
+            <Button onClick={handleManageBilling} variant="outline" className="space-mono-regular">
               Manage billing
             </Button>
-            <Button onClick={handleUpgrade}>Upgrade plan</Button>
+            <Button onClick={handleUpgrade} className="space-mono-regular">Upgrade plan</Button>
           </div>
         </CardContent>
       </Card>
@@ -92,10 +92,10 @@ export function AccountBillingTab() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Payment method</CardTitle>
-            <CardDescription>Secure payments processed via Stripe.</CardDescription>
+            <CardTitle className="space-mono-regular">Payment method</CardTitle>
+            <CardDescription className="fira-mono-regular">Secure payments processed via Stripe.</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+          <CardContent className="text-sm text-muted-foreground fira-mono-regular">
             <p>No card on file yet.</p>
             <p className="mt-1">Add a payment method when you upgrade to a paid plan.</p>
           </CardContent>
@@ -103,10 +103,10 @@ export function AccountBillingTab() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Invoice history</CardTitle>
-            <CardDescription>Access downloadable receipts for your records.</CardDescription>
+            <CardTitle className="space-mono-regular">Invoice history</CardTitle>
+            <CardDescription className="fira-mono-regular">Access downloadable receipts for your records.</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+          <CardContent className="text-sm text-muted-foreground fira-mono-regular">
             <p>No invoices to display.</p>
             <p className="mt-1">You&apos;ll receive receipts via email after each renewal.</p>
           </CardContent>
@@ -124,8 +124,8 @@ type UsageStatProps = {
 function UsageStat({ label, value }: UsageStatProps) {
   return (
     <div className="rounded-lg border bg-card p-4">
-      <p className="text-xs uppercase text-muted-foreground">{label}</p>
-      <p className="mt-2 text-lg font-semibold">{value}</p>
+      <p className="text-xs uppercase text-muted-foreground fira-mono-regular">{label}</p>
+      <p className="mt-2 text-lg font-semibold space-mono-regular">{value}</p>
     </div>
   )
 }

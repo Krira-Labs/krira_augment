@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Loader2 } from "lucide-react";
+import { Loader2, BarChart3, Brain, HardDrive, Sparkles } from "lucide-react";
 
 import { usageService, type UsageSummaryResponse } from "@/lib/api/usage.service";
 import { cn } from "@/lib/utils";
@@ -50,8 +50,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-sm">
-        <p className="font-semibold text-foreground">{label}</p>
-        <p className="text-muted-foreground">Requests: {payload[0].value}</p>
+        <p className="font-semibold text-foreground space-mono-regular">{label}</p>
+        <p className="text-muted-foreground fira-mono-regular">Requests: {payload[0].value}</p>
       </div>
     );
   }
@@ -109,12 +109,12 @@ export function UsageAnalyticsTab() {
   if (error || !summary) {
     return (
       <div className="rounded-xl border border-dashed p-12 text-center">
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="text-sm text-muted-foreground mb-4 fira-mono-regular">
           {error || 'Unable to load usage metrics right now.'}
         </p>
         <button
           onClick={() => fetchUsage()}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors space-mono-regular"
         >
           Retry
         </button>
@@ -139,66 +139,94 @@ export function UsageAnalyticsTab() {
     <div className="space-y-6 p-1">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Usage & Analytics</h2>
-          <p className="text-muted-foreground">Monitor how your workspace consumes the RAG pipeline allowance.</p>
+          <h2 className="text-2xl font-bold tracking-tight space-mono-regular">Usage & Analytics</h2>
+          <p className="text-muted-foreground fira-mono-regular">Monitor how your workspace consumes the RAG pipeline allowance.</p>
         </div>
-        <div className="text-sm text-muted-foreground">Last refreshed {new Date().toLocaleDateString()}</div>
+        <div className="text-sm text-muted-foreground fira-mono-regular">Last refreshed {new Date().toLocaleDateString()}</div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-primary/30 bg-primary/5">
+        {/* Requests Card - Blue Theme */}
+        <Card className="relative overflow-hidden border-blue-200/50 bg-gradient-to-br from-blue-50 via-blue-50/50 to-indigo-50 dark:from-blue-950/30 dark:via-blue-900/20 dark:to-indigo-950/30 dark:border-blue-800/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-indigo-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Requests used</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-blue-700 dark:text-blue-300 space-mono-regular">Requests used</CardTitle>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20">
+                <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-2xl font-bold">{usage.requestsUsed.toLocaleString()}</div>
-            <Progress value={requestProgress} />
-            <p className="text-xs text-muted-foreground">{remainingRequests.toLocaleString()} requests remaining</p>
+            <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent space-mono-regular">{usage.requestsUsed.toLocaleString()}</div>
+            <Progress value={requestProgress} className="h-2 bg-blue-100 dark:bg-blue-900/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-indigo-500" />
+            <p className="text-xs text-blue-600/80 dark:text-blue-400 fira-mono-regular">{remainingRequests.toLocaleString()} requests remaining</p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Pipelines Card - Purple Theme */}
+        <Card className="relative overflow-hidden border-purple-200/50 bg-gradient-to-br from-purple-50 via-violet-50/50 to-pink-50 dark:from-purple-950/30 dark:via-violet-900/20 dark:to-pink-950/30 dark:border-purple-800/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Pipelines</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-purple-700 dark:text-purple-300 space-mono-regular">Pipelines</CardTitle>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/20">
+                <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{usage.pipelinesUsed}/{usage.pipelineLimit}</div>
-            <p className="text-xs text-muted-foreground">RAG pipelines created</p>
+            <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent space-mono-regular">{usage.pipelinesUsed}/{usage.pipelineLimit}</div>
+            <p className="text-xs text-purple-600/80 dark:text-purple-400 mt-2 fira-mono-regular">RAG pipelines created</p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Storage Card - Emerald Theme */}
+        <Card className="relative overflow-hidden border-emerald-200/50 bg-gradient-to-br from-emerald-50 via-teal-50/50 to-cyan-50 dark:from-emerald-950/30 dark:via-teal-900/20 dark:to-cyan-950/30 dark:border-emerald-800/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-400/20 to-cyan-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Storage</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-emerald-700 dark:text-emerald-300 space-mono-regular">Storage</CardTitle>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20">
+                <HardDrive className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatStorageValue(usage.storageUsedMb)} MB</div>
-            <p className="text-xs text-muted-foreground">of {usage.storageLimitMb} MB per pipeline</p>
+            <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent space-mono-regular">{formatStorageValue(usage.storageUsedMb)} MB</div>
+            <p className="text-xs text-emerald-600/80 dark:text-emerald-400 mt-2 fira-mono-regular">of {usage.storageLimitMb} MB per pipeline</p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Plan Card - Amber/Orange Theme */}
+        <Card className="relative overflow-hidden border-amber-200/50 bg-gradient-to-br from-amber-50 via-orange-50/50 to-yellow-50 dark:from-amber-950/30 dark:via-orange-900/20 dark:to-yellow-950/30 dark:border-amber-800/30">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-400/20 to-orange-500/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Plan</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-amber-700 dark:text-amber-300 space-mono-regular">Plan</CardTitle>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="text-xl font-semibold">{plan.name}</div>
-            <Badge className={cn("w-fit", plan.isFree ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700")}>
+            <div className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent space-mono-regular">{plan.name}</div>
+            <Badge className={cn("w-fit fira-mono-regular shadow-sm", plan.isFree ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0" : "bg-gradient-to-r from-emerald-400 to-teal-500 text-white border-0")}>
               {plan.isFree ? "Free" : "Paid"}
             </Badge>
-            <p className="text-xs text-muted-foreground">Providers: {plan.providers.join(", ")}</p>
+            <p className="text-xs text-amber-600/80 dark:text-amber-400 fira-mono-regular">Providers: {plan.providers.join(", ")}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Daily request volume</CardTitle>
-          <CardDescription>Rolling 14-day window of requests.</CardDescription>
+          <CardTitle className="space-mono-regular">Daily request volume</CardTitle>
+          <CardDescription className="fira-mono-regular">Rolling 14-day window of requests.</CardDescription>
         </CardHeader>
         <CardContent className="h-[320px]">
           {trendData.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground fira-mono-regular">
               No request data yet.
             </div>
           ) : (
@@ -217,12 +245,12 @@ export function UsageAnalyticsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Usage history</CardTitle>
-          <CardDescription>Exact request counts captured for each day.</CardDescription>
+          <CardTitle className="space-mono-regular">Usage history</CardTitle>
+          <CardDescription className="fira-mono-regular">Exact request counts captured for each day.</CardDescription>
         </CardHeader>
         <CardContent>
           {displayHistory.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No request history captured yet.</p>
+            <p className="text-sm text-muted-foreground fira-mono-regular">No request history captured yet.</p>
           ) : (
             <div className="space-y-3">
               {displayHistory
@@ -234,10 +262,10 @@ export function UsageAnalyticsTab() {
                     className="flex items-center justify-between rounded-lg border bg-card/50 px-4 py-3"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{formatHistoryDate(entry.date)}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</p>
+                      <p className="text-sm font-semibold text-foreground space-mono-regular">{formatHistoryDate(entry.date)}</p>
+                      <p className="text-xs text-muted-foreground fira-mono-regular">{new Date(entry.date).toLocaleDateString()}</p>
                     </div>
-                    <Badge variant="secondary" className="text-sm font-normal">
+                    <Badge variant="secondary" className="text-sm font-normal fira-mono-regular">
                       {entry.requests.toLocaleString()} requests
                     </Badge>
                   </div>

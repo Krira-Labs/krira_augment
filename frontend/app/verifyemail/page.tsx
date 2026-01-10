@@ -1,6 +1,5 @@
 "use client"
 
-import { LogoIcon } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,9 +7,10 @@ import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { authService } from "@/lib/api/auth.service"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ChangeEvent, ClipboardEvent, FormEvent, KeyboardEvent, useRef, useState, useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, ArrowLeft } from "lucide-react"
 
 const OTP_LENGTH = 6
 
@@ -37,7 +37,7 @@ export default function VerifyEmail() {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        
+
         if (!otp.every((value) => value)) {
             toast({
                 title: "Error",
@@ -51,12 +51,12 @@ export default function VerifyEmail() {
 
         try {
             const otpString = otp.join('')
-            
+
             // Debug logging
             console.log('Verifying OTP:');
             console.log('Email:', email);
             console.log('OTP:', otpString);
-            
+
             const response = await authService.verifyOtp({
                 email,
                 otp: otpString,
@@ -184,26 +184,42 @@ export default function VerifyEmail() {
     const isOtpComplete = otp.every((digit) => digit)
 
     return (
-        <section className="flex min-h-screen bg-background px-4 py-16 md:py-18">
+        <section className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-16 md:py-18 relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+
+            {/* Back Button */}
+            <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <ArrowLeft className="size-5" />
+                <span className="space-mono-regular text-sm font-medium">Back</span>
+            </Link>
+
             <form
                 onSubmit={handleSubmit}
-                className="bg-card m-auto h-fit w-full max-w-md rounded-lg border p-0.5 shadow-md">
+                className="bg-background relative z-10 w-full max-w-[400px] rounded-xl border border-border shadow-xl overflow-hidden">
                 <div className="p-8 pb-6">
-                    <div>
+                    <div className="mb-8">
                         <Link
                             href="/"
-                            aria-label="go home">
-                            <LogoIcon />
+                            aria-label="go home"
+                            className="inline-block mb-6">
+                            <Image
+                                src="/krira-augment-logo3.jpeg"
+                                alt="Krira Logo"
+                                width={60}
+                                height={60}
+                                className="rounded-lg"
+                            />
                         </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Verify your email</h1>
-                        <p className="text-muted-foreground text-sm">
+                        <h1 className="mb-2 text-2xl font-bold space-mono-regular">Verify your email</h1>
+                        <p className="text-muted-foreground text-sm space-mono-regular">
                             Enter the six-digit code we sent to your email address.
                         </p>
                     </div>
 
-                    <div className="mt-6 space-y-5">
+                    <div className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="otp-0">One-time passcode</Label>
+                            <Label htmlFor="otp-0" className="space-mono-regular">One-time passcode</Label>
                             <div className="flex justify-between gap-2">
                                 {otp.map((value, index) => (
                                     <Input
@@ -219,13 +235,13 @@ export default function VerifyEmail() {
                                         inputMode="numeric"
                                         autoComplete="one-time-code"
                                         maxLength={1}
-                                        className="h-12 w-11 text-center text-lg tracking-[0.25em]"
+                                        className="h-12 w-11 text-center text-lg tracking-[0.25em] space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                                     />
                                 ))}
                             </div>
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={!isOtpComplete || isLoading}>
+                        <Button type="submit" className="w-full font-bold space-mono-regular" disabled={!isOtpComplete || isLoading}>
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -236,12 +252,12 @@ export default function VerifyEmail() {
                             )}
                         </Button>
 
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-sm space-mono-regular">
                             <span className="text-muted-foreground">Didn&apos;t receive the code?</span>
-                            <Button 
-                                type="button" 
-                                variant="link" 
-                                className="px-0"
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="px-0 font-bold"
                                 onClick={handleResend}
                                 disabled={isResending}
                             >
@@ -251,12 +267,12 @@ export default function VerifyEmail() {
                     </div>
                 </div>
 
-                <div className="bg-muted rounded-b-lg border-t p-4">
-                    <p className="text-foreground text-center text-sm">
-                        Wrong email address?
-                        <Button asChild variant="link" className="px-2">
-                            <Link href="/signup">Try again</Link>
-                        </Button>
+                <div className="bg-muted/50 border-t p-4 text-center">
+                    <p className="text-sm text-muted-foreground space-mono-regular">
+                        Wrong email address?{' '}
+                        <Link href="/signup" className="text-primary font-bold hover:underline">
+                            Try again
+                        </Link>
                     </p>
                 </div>
             </form>

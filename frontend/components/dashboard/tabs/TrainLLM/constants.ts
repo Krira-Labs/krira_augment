@@ -146,11 +146,11 @@ const PUBLIC_API_SNIPPET_URL = process.env.NEXT_PUBLIC_PUBLIC_API_URL ?? "https:
 export const CODE_SNIPPETS: Record<string, { language: string; code: string }> = {
   python: {
     language: "python",
-    code: `from kriralabs import Kriralabs
+    code: `from krira_augment import KriraAugment
 
-client = Kriralabs(
+client = KriraAugment(
     api_key="YOUR_KEY",
-    bot_id="support-pro-bot"
+    pipeline_name="support-pro-bot"
 )
 
 response = client.ask("How do I reset my password?")
@@ -162,7 +162,7 @@ print(response.answer)`,
     -H "Authorization: Bearer $KRIRA_KEY" \\
     -H "Content-Type: application/json" \\
     -d '{
-        "bot_id": "support-pro-bot",
+        "pipeline_name": "support-pro-bot",
         "query": "How can I update billing?"
     }'`,
   },

@@ -1,6 +1,5 @@
 "use client"
 
-import { LogoIcon } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,9 +7,10 @@ import { useToast } from '@/components/ui/use-toast'
 import { authService } from '@/lib/api/auth.service'
 import GoogleAuthButton from '@/components/GoogleAuthButton'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, FormEvent } from 'react'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export default function SignupPage() {
     const router = useRouter()
@@ -36,7 +36,7 @@ export default function SignupPage() {
     // Password strength calculation
     const getPasswordStrength = (password: string) => {
         if (!password) return { strength: 0, label: 'None', color: 'bg-gray-200' }
-        
+
         let strength = 0
         if (password.length >= 8) strength += 1
         if (/[A-Z]/.test(password)) strength += 1
@@ -58,7 +58,7 @@ export default function SignupPage() {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        
+
         // Validation
         if (formData.password !== formData.confirmPassword) {
             toast({
@@ -93,13 +93,13 @@ export default function SignupPage() {
                     description: response.message,
                     variant: "success",
                 })
-                
+
                 // Store email for verification page (use email from response to ensure it matches backend)
                 const emailToStore = response.email || formData.email;
                 sessionStorage.setItem('verificationEmail', emailToStore.toLowerCase().trim());
-                
+
                 console.log('Signup successful, email stored:', emailToStore.toLowerCase().trim());
-                
+
                 // Redirect to verification page
                 router.push('/verifyemail')
             }
@@ -119,19 +119,35 @@ export default function SignupPage() {
     const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
     return (
-        <section className="flex min-h-screen bg-background px-4 py-16 md:py-20">
+        <section className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-16 md:py-20 relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+
+            {/* Back Button */}
+            <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <ArrowLeft className="size-5" />
+                <span className="space-mono-regular text-sm font-medium">Back</span>
+            </Link>
+
             <form
                 onSubmit={handleSubmit}
-                className="bg-card m-auto h-fit w-full max-w-md rounded-lg border p-0.5 shadow-md">
+                className="bg-background relative z-10 w-full max-w-[450px] rounded-xl border border-border shadow-xl overflow-hidden">
                 <div className="p-8 pb-6">
-                    <div>
+                    <div className="mb-8">
                         <Link
                             href="/"
-                            aria-label="go home">
-                            <LogoIcon />
+                            aria-label="go home"
+                            className="inline-block mb-6">
+                            <Image
+                                src="/krira-augment-logo3.jpeg"
+                                alt="Krira Logo"
+                                width={60}
+                                height={60}
+                                className="rounded-lg"
+                            />
                         </Link>
-                        <h1 className="mb-1 mt-4 text-xl font-semibold">Create a Tailark Account</h1>
-                        <p className="text-muted-foreground text-sm">Welcome! Create an account to get started</p>
+                        <h1 className="mb-2 text-2xl font-bold space-mono-regular">Start Building with Krira</h1>
+                        <p className="text-muted-foreground text-sm space-mono-regular">Create an account to get started</p>
                     </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-3">
@@ -142,17 +158,17 @@ export default function SignupPage() {
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-border"></div>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                        <div className="relative flex justify-center text-[10px] uppercase font-medium tracking-wider">
+                            <span className="bg-background px-3 text-muted-foreground space-mono-regular">Or continue with</span>
                         </div>
                     </div>
 
-                    <div className="space-y-5">
+                    <div className="space-y-4">
                         <div className="grid grid-cols-1 gap-3">
                             <div className="space-y-2">
                                 <Label
                                     htmlFor="fullname"
-                                    className="block text-sm">
+                                    className="block text-sm font-medium space-mono-regular">
                                     Full Name
                                 </Label>
                                 <Input
@@ -164,6 +180,7 @@ export default function SignupPage() {
                                     onChange={handleInputChange}
                                     placeholder="Enter your full name"
                                     disabled={isLoading}
+                                    className="space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                                 />
                             </div>
                         </div>
@@ -171,7 +188,7 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
-                                className="block text-sm">
+                                className="block text-sm font-medium space-mono-regular">
                                 Email
                             </Label>
                             <Input
@@ -183,13 +200,14 @@ export default function SignupPage() {
                                 onChange={handleInputChange}
                                 placeholder="Enter your email"
                                 disabled={isLoading}
+                                className="space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <Label
                                 htmlFor="password"
-                                className="text-sm">
+                                className="text-sm font-medium space-mono-regular">
                                 Password
                             </Label>
                             <div className="relative">
@@ -201,7 +219,7 @@ export default function SignupPage() {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     placeholder="Create a password"
-                                    className="pr-10"
+                                    className="pr-10 space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                                     disabled={isLoading}
                                 />
                                 <button
@@ -212,27 +230,26 @@ export default function SignupPage() {
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
-                            
+
                             {/* Password Strength Meter */}
                             {formData.password && (
                                 <div className="mt-3 space-y-2">
-                                    <div className="flex justify-between text-xs">
+                                    <div className="flex justify-between text-xs space-mono-regular">
                                         <span className="text-muted-foreground">Password strength:</span>
-                                        <span className={`font-medium ${
-                                            passwordStrength.strength <= 2 ? 'text-red-500' :
+                                        <span className={`font-medium ${passwordStrength.strength <= 2 ? 'text-red-500' :
                                             passwordStrength.strength <= 3 ? 'text-yellow-500' :
-                                            'text-green-500'
-                                        }`}>
+                                                'text-green-500'
+                                            }`}>
                                             {passwordStrength.label}
                                         </span>
                                     </div>
                                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className={`h-full transition-all duration-300 ${passwordStrength.color}`}
                                             style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
                                         />
                                     </div>
-                                    <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                                    <ul className="text-xs text-muted-foreground space-y-1 mt-2 space-mono-regular">
                                         <li className={`flex items-center gap-2 ${formData.password.length >= 8 ? 'text-green-500' : ''}`}>
                                             <div className={`w-1 h-1 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-muted-foreground'}`} />
                                             At least 8 characters
@@ -257,7 +274,7 @@ export default function SignupPage() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="confirmPassword"
-                                className="text-sm">
+                                className="text-sm font-medium space-mono-regular">
                                 Confirm Password
                             </Label>
                             <div className="relative">
@@ -269,7 +286,7 @@ export default function SignupPage() {
                                     value={formData.confirmPassword}
                                     onChange={handleInputChange}
                                     placeholder="Confirm your password"
-                                    className="pr-10"
+                                    className="pr-10 space-mono-regular shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all duration-200 hover:border-primary/50"
                                     disabled={isLoading}
                                 />
                                 <button
@@ -281,16 +298,16 @@ export default function SignupPage() {
                                 </button>
                             </div>
                             {formData.confirmPassword && !passwordsMatch && (
-                                <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
+                                <p className="text-red-500 text-xs mt-1 space-mono-regular">Passwords do not match</p>
                             )}
                             {formData.confirmPassword && passwordsMatch && (
-                                <p className="text-green-500 text-xs mt-1">Passwords match!</p>
+                                <p className="text-green-500 text-xs mt-1 space-mono-regular">Passwords match!</p>
                             )}
                         </div>
 
-                        <Button 
-                            type="submit" 
-                            className="w-full"
+                        <Button
+                            type="submit"
+                            className="w-full font-bold space-mono-regular mt-2"
                             disabled={!passwordsMatch || passwordStrength.strength < 3 || isLoading}
                         >
                             {isLoading ? (
@@ -305,15 +322,12 @@ export default function SignupPage() {
                     </div>
                 </div>
 
-                <div className="bg-muted rounded-b-lg border-t p-4">
-                    <p className="text-foreground text-center text-sm">
-                        Already have an account?
-                        <Button
-                            asChild
-                            variant="link"
-                            className="px-2">
-                            <Link href="/login">Sign In</Link>
-                        </Button>
+                <div className="bg-muted/50 border-t p-4 text-center">
+                    <p className="text-sm text-muted-foreground space-mono-regular">
+                        Already have an account?{' '}
+                        <Link href="/login" className="text-primary font-bold hover:underline">
+                            Sign In
+                        </Link>
                     </p>
                 </div>
             </form>

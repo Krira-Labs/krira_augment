@@ -62,15 +62,15 @@ const NAVIGATION_ITEMS: SidebarItem[] = [
     icon: Brain,
     description: "Configure training workflows",
   },
- 
-  
+
+
   {
     value: "previous-chatbots",
-    label: "Previous Chatbots",
+    label: "Deployments",
     icon: MessageSquare,
-    description: "Manage deployed assistants",
+    description: "Manage and monitor your active RAG deployments",
   },
-   {
+  {
     value: "playground",
     label: "Playground",
     icon: MessageCircle,
@@ -128,30 +128,28 @@ export function AppSidebar({
           <div className="flex items-center justify-between p-3">
             {open ? (
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20">
+                <div className="relative flex h-8 w-8 items-center justify-center">
                   <Image
-                    src="/krira-augment-logo.png"
+                    src="/krira-augment-logo3.jpeg"
                     alt="Krira Augment Logo"
-                    width={28}
-                    height={28}
-                    className="drop-shadow-sm"
+                    fill
+                    className="rounded-md object-cover"
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold leading-tight text-sidebar-foreground">
+                  <p className="text-sm font-semibold leading-tight text-sidebar-foreground space-mono-regular">
                     Krira Augment
                   </p>
-                  <p className="text-[11px] text-muted-foreground">AI Dashboard</p>
+                  <p className="text-[11px] text-muted-foreground fira-mono-regular">AI Dashboard</p>
                 </div>
               </div>
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20 mx-auto">
+              <div className="relative mx-auto flex h-8 w-8 items-center justify-center">
                 <Image
-                  src="/krira-augment-logo.png"
+                  src="/krira-augment-logo3.jpeg"
                   alt="Krira Augment Logo"
-                  width={28}
-                  height={28}
-                  className="drop-shadow-sm"
+                  fill
+                  className="rounded-md object-cover"
                 />
               </div>
             )}
@@ -181,29 +179,26 @@ export function AppSidebar({
                         "relative transition-all duration-200 group/item rounded-lg",
                         !open ? "h-10 w-10 p-0 justify-center mx-auto" : "px-3 py-2.5",
                         isActive
-                          ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+                          ? "bg-[var(--color-gray-medium)] text-primary"
                           : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <div className={cn(
                         "flex items-center justify-center rounded-md transition-colors",
                         !open ? "" : "h-7 w-7 shrink-0",
-                        isActive 
-                          ? "bg-primary/15 text-primary" 
+                        isActive
+                          ? "text-primary"
                           : "text-muted-foreground group-hover/item:text-foreground"
                       )}>
                         <Icon className={cn("transition-transform", !open ? "h-5 w-5" : "h-4 w-4")} />
                       </div>
                       {open && (
                         <>
-                          <span className="flex-1 ml-2 text-sm font-medium">{item.label}</span>
+                          <span className="flex-1 ml-2 text-sm font-medium space-mono-regular truncate whitespace-nowrap">{item.label}</span>
                           {isActive && (
                             <ChevronRight className="h-4 w-4 text-primary/60" />
                           )}
                         </>
-                      )}
-                      {isActive && (
-                        <div className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary shadow-sm shadow-primary/30" />
                       )}
                     </SidebarMenuButton>
                   );
@@ -218,8 +213,8 @@ export function AppSidebar({
                             sideOffset={8}
                             className="flex flex-col gap-1 px-3 py-2"
                           >
-                            <p className="font-semibold text-sm">{item.label}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="font-semibold text-sm space-mono-regular">{item.label}</p>
+                            <p className="text-xs text-muted-foreground fira-mono-regular">
                               {item.description}
                             </p>
                           </TooltipContent>
@@ -249,7 +244,7 @@ export function AppSidebar({
               >
                 <Link href="/">
                   <Home className={cn("transition-colors", open ? "mr-2 h-4 w-4" : "h-5 w-5")} />
-                  {open && <span className="text-sm">Home</span>}
+                  {open && <span className="text-sm space-mono-regular">Home</span>}
                 </Link>
               </Button>
             </TooltipTrigger>
@@ -269,7 +264,7 @@ export function AppSidebar({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                  <span className="text-sm font-semibold text-foreground truncate">
+                  <span className="text-sm font-semibold text-foreground truncate space-mono-regular">
                     {displayName}
                   </span>
                   <div className="flex items-center gap-2 min-w-0">
@@ -305,7 +300,7 @@ export function AppSidebar({
                 ) : (
                   <LogOut className="h-4 w-4" />
                 )}
-                <span className="text-sm">{isLoggingOut ? "Signing out..." : "Sign out"}</span>
+                <span className="text-sm space-mono-regular">{isLoggingOut ? "Signing out..." : "Sign out"}</span>
               </Button>
             </>
           ) : (

@@ -31,11 +31,11 @@ export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSn
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // Replace placeholder bot_id with actual bot name
+  // Replace placeholder pipeline_name with actual bot name
   const dynamicSnippets = React.useMemo(() => {
     const safeBotName = botName?.trim() || "your-bot-name"
     const formattedBotId = safeBotName.toLowerCase().replace(/\s+/g, "-")
-    
+
     return Object.fromEntries(
       Object.entries(codeSnippets).map(([key, snippet]) => [
         key,
@@ -109,10 +109,10 @@ export function DeploymentOptions({ deploymentTab, onDeploymentTabChange, codeSn
                       marginRight: "1em",
                       userSelect: "none"
                     }}
-                    customStyle={{ 
-                      background: "transparent", 
-                      padding: "1rem 0.5rem", 
-                      margin: 0, 
+                    customStyle={{
+                      background: "transparent",
+                      padding: "1rem 0.5rem",
+                      margin: 0,
                       fontSize: "0.8rem",
                       lineHeight: "1.7",
                       overflow: "visible",

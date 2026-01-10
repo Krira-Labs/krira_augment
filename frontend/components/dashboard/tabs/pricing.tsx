@@ -13,6 +13,8 @@ import {
   Info,
   Loader2,
   Lock,
+  MessageSquare,
+  Minus,
   Shield,
   Sparkle,
   Star,
@@ -79,22 +81,28 @@ const FALLBACK_PLANS: PlanCard[] = [
     features: ["3 RAG pipelines", "5k monthly requests", "Premium provider access"],
     highlight: true,
   },
+  {
+    id: "enterprise_monthly",
+    name: "Enterprise",
+    description: "Maximum scale for large organizations with advanced managed infrastructure.",
+    badge: "Best value",
+    monthlyPrice: 200,
+    annualPrice: null,
+    currency: "USD",
+    isFree: false,
+    comingSoon: false,
+    billingCycle: "monthly",
+    requestLimit: 15000,
+    pipelineLimit: 8,
+    storageLimitMb: 1024,
+    providers: ["OpenAI", "Anthropic", "Google", "Perplexity", "DeepSeek"],
+    vectorStores: ["Chroma", "Pinecone", "Weaviate"],
+    embeddingModels: ["OpenAI Pro/Ultra", "HuggingFace Large"],
+    features: ["8 RAG pipelines", "15k monthly requests", "Priority dedicated support"],
+  },
 ]
 
-const FAQS = [
-  {
-    question: "Can I upgrade or downgrade anytime?",
-    answer: "Yes. Changes apply immediately and your plan prorates on the next invoice.",
-  },
-  {
-    question: "Do you support annual billing?",
-    answer: "Annual plans are coming soon. Join the waitlist from the dashboard to be notified.",
-  },
-  {
-    question: "How do usage limits work?",
-    answer: "Each pipeline request counts toward your monthly allocation. We'll email you at 80% and 100% utilization.",
-  },
-]
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -520,27 +528,35 @@ export function PricingTab() {
       <Card
         key={plan.id}
         className={cn(
-          "flex h-full flex-col border transition-all",
+          "group relative flex h-full flex-col border transition-all duration-300 hover:shadow-xl overflow-hidden",
           plan.highlight ? "border-primary shadow-lg" : "hover:border-primary/40",
           plan.comingSoon && "opacity-70"
         )}
       >
-        {plan.highlight && <div className="h-1 w-full bg-gradient-to-r from-primary to-primary/40" />}
+        {/* Aurora glow effect on card */}
+        <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-gradient-to-r from-violet-500/20 to-indigo-500/20 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl" />
+        </div>
+
+        {plan.highlight && (
+          <div className="absolute top-0 left-0 h-1.5 w-full bg-gradient-to-r from-primary via-primary/60 to-primary/30 z-10" />
+        )}
         <CardHeader className="space-y-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">{plan.name}</CardTitle>
-            {plan.badge && <Badge>{plan.badge}</Badge>}
+            <CardTitle className="text-lg font-semibold space-mono-regular">{plan.name}</CardTitle>
+            {plan.badge && <Badge className="fira-mono-regular">{plan.badge}</Badge>}
           </div>
-          <CardDescription>{plan.description}</CardDescription>
+          <CardDescription className="fira-mono-regular">{plan.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col space-y-5">
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold">{formatPrice(plan)}</span>
-            {!plan.comingSoon && <span className="text-sm text-muted-foreground">/ {plan.billingCycle === "annual" ? "year" : "month"}</span>}
+            <span className="text-4xl font-bold space-mono-regular">{formatPrice(plan)}</span>
+            {!plan.comingSoon && <span className="text-sm text-muted-foreground fira-mono-regular">/ {plan.billingCycle === "annual" ? "year" : "month"}</span>}
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground">Includes</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-sm font-semibold text-foreground space-mono-regular">Includes</p>
+            <ul className="space-y-2 text-sm text-muted-foreground fira-mono-regular">
               {[`Requests: ${plan.requestLimit.toLocaleString()} / mo`, `Pipelines: ${plan.pipelineLimit}`, `Storage: ${plan.storageLimitMb} MB / pipeline`, ...plan.features].map((feature) => (
                 <li key={feature} className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
@@ -553,7 +569,7 @@ export function PricingTab() {
         <CardFooter>
           {!plan.isFree || !isCurrent ? (
             <Button
-              className="w-full"
+              className="w-full space-mono-regular"
               disabled={disabled || checkoutPlan === plan.id}
               variant={isCurrent ? "outline" : "default"}
               onClick={() => handleUpgrade(plan)}
@@ -564,7 +580,7 @@ export function PricingTab() {
             </Button>
           ) : (
             <Button
-              className="w-full"
+              className="w-full space-mono-regular"
               variant="outline"
               disabled
             >
@@ -596,11 +612,11 @@ export function PricingTab() {
           <Card className="overflow-hidden border-primary/30 bg-gradient-to-r from-primary/5 via-background to-background">
             <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <Badge variant="outline" className="mb-2 gap-1 text-primary">
+                <Badge variant="outline" className="mb-2 gap-1 text-primary space-mono-regular">
                   <Star className="h-3.5 w-3.5" /> Current plan
                 </Badge>
-                <CardTitle className="text-2xl font-semibold">{currentPlanLabel}</CardTitle>
-                <CardDescription>Track how close you are to the monthly allowance.</CardDescription>
+                <CardTitle className="text-2xl font-semibold space-mono-regular">{currentPlanLabel}</CardTitle>
+                <CardDescription className="fira-mono-regular">Track how close you are to the monthly allowance.</CardDescription>
                 <div className="mt-2 grid gap-1 text-xs text-muted-foreground sm:text-sm">
                   <p>Requests: {planLimits.requestLimit.toLocaleString()} / month</p>
                   <p>Pipelines: {planLimits.pipelineLimit}</p>
@@ -608,17 +624,17 @@ export function PricingTab() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleBillingButton("invoices")}>
+                <Button variant="outline" size="sm" className="gap-2 space-mono-regular" onClick={() => handleBillingButton("invoices")}>
                   <CreditCard className="h-4 w-4" /> View invoices
                 </Button>
-                <Button variant="secondary" size="sm" className="gap-2" onClick={() => handleBillingButton("manage")}>
+                <Button variant="secondary" size="sm" className="gap-2 space-mono-regular" onClick={() => handleBillingButton("manage")}>
                   <Lock className="h-4 w-4" /> Manage billing
                 </Button>
                 {activePlanId !== "free" && (
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 space-mono-regular"
                     onClick={handleCancelSubscription}
                     disabled={isCancelling}
                   >
@@ -643,17 +659,17 @@ export function PricingTab() {
                 return (
                   <div key={metric.label} className="rounded-xl border bg-card p-4">
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span className="flex items-center gap-2 text-foreground">
+                      <span className="flex items-center gap-2 text-foreground fira-mono-regular">
                         <Icon className="h-4 w-4" />
                         {metric.label}
                       </span>
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground space-mono-regular">
                         {metric.format(metric.value, limit)}
                       </span>
                     </div>
                     <div className="mt-3 space-y-2">
                       <Progress value={percentage} className="h-2" />
-                      <div className="text-xs text-muted-foreground">{percentage.toFixed(0)}% used</div>
+                      <div className="text-xs text-muted-foreground fira-mono-regular">{percentage.toFixed(0)}% used</div>
                     </div>
                   </div>
                 )
@@ -664,59 +680,116 @@ export function PricingTab() {
 
         <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-between gap-4 border rounded-2xl p-4">
           <div>
-            <p className="text-sm font-semibold text-foreground">Billing cadence</p>
-            <p className="text-sm text-muted-foreground">Monthly plans are available. Annual billing is coming soon.</p>
+            <p className="text-sm font-semibold text-foreground space-mono-regular">Billing cadence</p>
+            <p className="text-sm text-muted-foreground fira-mono-regular">Monthly plans are available. Annual billing is coming soon.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Badge className="bg-primary text-primary-foreground">Monthly</Badge>
-            <Badge variant="outline" className="border-dashed text-muted-foreground">Annual – Coming soon</Badge>
+            <Badge className="bg-primary text-primary-foreground fira-mono-regular">Monthly</Badge>
+            <Badge variant="outline" className="border-dashed text-muted-foreground fira-mono-regular">Annual – Coming soon</Badge>
           </div>
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex justify-center">
-          <div className="grid w-full max-w-4xl gap-6 md:grid-cols-2">
+          <div className="grid w-full max-w-6xl gap-6 md:grid-cols-3">
             {displayedPlans.map(renderPlanCard)}
           </div>
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Compare features</CardTitle>
-              <CardDescription>All tiers include secure infrastructure, analytics, and API access.</CardDescription>
+          <Card className="overflow-hidden border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <CardHeader className="border-b bg-muted/30 pb-8">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="px-2 py-0.5 rounded-full bg-primary/10 text-primary border-primary/20">Comparison</Badge>
+              </div>
+              <CardTitle className="text-2xl space-mono-regular">Compare features</CardTitle>
+              <CardDescription className="fira-mono-regular">Detailed breakdown of quotas and capabilities across all tiers.</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground">
-                    <th className="py-3">Feature</th>
-                    {plans.map((plan) => (
-                      <th key={plan.id} className="py-3 text-center">
-                        {plan.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: "Requests / month", getValue: (plan: PlanCard) => plan.requestLimit.toLocaleString() },
-                    { label: "Pipelines", getValue: (plan: PlanCard) => plan.pipelineLimit },
-                    { label: "Storage", getValue: (plan: PlanCard) => `${plan.storageLimitMb} MB` },
-                    { label: "Vector store", getValue: (plan: PlanCard) => plan.vectorStores.join(", ") },
-                    { label: "LLM providers", getValue: (plan: PlanCard) => plan.providers.join(", ") },
-                  ].map((row) => (
-                    <tr key={row.label} className="border-t">
-                      <td className="py-3 font-medium">{row.label}</td>
+            <CardContent className="p-0 overflow-x-auto">
+              <div className="min-w-[800px]">
+                <table className="w-full border-separate border-spacing-0">
+                  <thead className="bg-muted/50">
+                    <tr className="space-mono-regular">
+                      <th className="py-5 px-6 text-left font-semibold text-sm border-b border-zinc-200 dark:border-zinc-800">Feature</th>
                       {plans.map((plan) => (
-                        <td key={`${row.label}-${plan.id}`} className="py-3 text-center text-muted-foreground">
-                          {row.getValue(plan)}
-                        </td>
+                        <th key={plan.id} className="py-5 px-6 text-center font-semibold text-sm border-b border-zinc-200 dark:border-zinc-800">
+                          <div className="flex flex-col items-center gap-1">
+                            <span>{plan.name}</span>
+                            {plan.id === activePlanId && (
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 bg-primary/5 text-primary border-primary/20">Current</Badge>
+                            )}
+                          </div>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="fira-mono-regular">
+                    {[
+                      {
+                        category: "Quotas",
+                        items: [
+                          { label: "RAG Pipelines", free: "1", starter: "3", enterprise: "8" },
+                          { label: "Monthly Requests", free: "100", starter: "5,000", enterprise: "15,000" },
+                          { label: "Storage per Pipeline", free: "50 MB", starter: "500 MB", enterprise: "1 GB" },
+                        ]
+                      },
+                      {
+                        category: "Capabilities",
+                        items: [
+                          { label: "Vector Databases", free: "Chroma", starter: "Chroma, Pinecone", enterprise: "Chroma, Pinecone, Weaviate" },
+                          { label: "AI Providers", free: "3 Providers", starter: "All (+ Anthropic)", enterprise: "All (+ Dedicated)" },
+                          { label: "Embedding Models", free: "2 Models", starter: "All (+ Pro)", enterprise: "All (+ Ultra)" },
+                          { label: "Analytics Dashboard", free: true, starter: "Pro Analytics", enterprise: "Enterprise SIEM" },
+                          { label: "API Access", free: true, starter: true, enterprise: true },
+                        ]
+                      },
+                      {
+                        category: "Support",
+                        items: [
+                          { label: "Support Level", free: "Community", starter: "Standard (24h)", enterprise: "Priority (Instant)" },
+                          { label: "White-labeling", free: false, starter: true, enterprise: true },
+                        ]
+                      }
+                    ].map((section, sIdx) => (
+                      <React.Fragment key={section.category}>
+                        <tr className="bg-zinc-50 dark:bg-zinc-900/50">
+                          <td colSpan={plans.length + 1} className="py-3 px-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 border-b border-zinc-200 dark:border-zinc-800">
+                            {section.category}
+                          </td>
+                        </tr>
+                        {section.items.map((row, rIdx) => (
+                          <tr key={row.label} className="group hover:bg-muted/30 transition-colors">
+                            <td className="py-4 px-6 text-sm font-medium border-b border-zinc-200 dark:border-zinc-800">{row.label}</td>
+                            {plans.map((plan) => {
+                              const planKey = (plan.id === 'free' ? 'free' : plan.id === 'startup_monthly' ? 'starter' : 'enterprise') as keyof typeof row;
+                              const val = row[planKey];
+                              return (
+                                <td key={`${row.label}-${plan.id}`} className="py-4 px-6 text-center text-sm border-b border-zinc-200 dark:border-zinc-800">
+                                  {typeof val === "boolean" ? (
+                                    val ? (
+                                      <Check className="mx-auto h-4 w-4 text-emerald-500" strokeWidth={3} />
+                                    ) : (
+                                      <Minus className="mx-auto h-4 w-4 text-zinc-300 dark:text-zinc-700" />
+                                    )
+                                  ) : (
+                                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">{val as string}</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
+            <CardFooter className="bg-muted/20 border-t py-6 justify-center">
+              <p className="text-xs text-muted-foreground flex items-center gap-2">
+                <Sparkle className="h-3 w-3 text-primary" />
+                Enterprise plans include custom contracting and service level agreements (SLAs).
+              </p>
+            </CardFooter>
           </Card>
         </motion.div>
 
@@ -727,8 +800,8 @@ export function PricingTab() {
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5" />
                 <div className="flex-1">
-                  <CardTitle className="text-lg">Billing Terms & Conditions</CardTitle>
-                  <CardDescription className="mt-1">Important information about how subscriptions and billing work</CardDescription>
+                  <CardTitle className="text-lg space-mono-regular">Billing Terms & Conditions</CardTitle>
+                  <CardDescription className="mt-1 fira-mono-regular">Important information about how subscriptions and billing work</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -737,8 +810,8 @@ export function PricingTab() {
                 <div className="flex gap-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">Recurring Monthly Billing</p>
-                    <p className="text-muted-foreground mt-1">
+                    <p className="font-medium text-foreground space-mono-regular">Recurring Monthly Billing</p>
+                    <p className="text-muted-foreground mt-1 fira-mono-regular">
                       When you subscribe to a paid plan (e.g., $49/month), your payment card will be automatically charged
                       <strong className="text-foreground"> every month</strong> on the same date until you cancel. This ensures uninterrupted access to your plan's features.
                     </p>
@@ -794,8 +867,8 @@ export function PricingTab() {
                 <div className="flex gap-3">
                   <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">Secure Payment Processing</p>
-                    <p className="text-muted-foreground mt-1">
+                    <p className="font-medium text-foreground space-mono-regular">Secure Payment Processing</p>
+                    <p className="text-muted-foreground mt-1 fira-mono-regular">
                       All payments are securely processed through Stripe, a PCI Level 1 certified payment provider.
                       We never store your credit card information. Your payment details are encrypted and handled exclusively by Stripe.
                     </p>
@@ -813,16 +886,7 @@ export function PricingTab() {
           </Card>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2">
-          {FAQS.map((faq) => (
-            <Card key={faq.question} className="border-dashed">
-              <CardHeader>
-                <CardTitle className="text-base">{faq.question}</CardTitle>
-                <CardDescription>{faq.answer}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </motion.div>
+
 
       </motion.div>
 

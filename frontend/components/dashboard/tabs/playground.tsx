@@ -386,16 +386,16 @@ export function PlaygroundTab() {
     return (
       <Card className="border-dashed py-12 text-center">
         <CardHeader>
-          <CardTitle className="flex items-center justify-center gap-2">
+          <CardTitle className="flex items-center justify-center gap-2 space-mono-regular">
             <Bot className="h-6 w-6" />
             No Active Chatbots
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="fira-mono-regular">
             You need to create and deploy a chatbot first before using the playground.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => router.push("/dashboard?tab=train-llm")}>
+          <Button onClick={() => router.push("/dashboard?tab=train-llm")} className="space-mono-regular">
             Create Your First Chatbot
           </Button>
         </CardContent>
@@ -451,8 +451,8 @@ export function PlaygroundTab() {
               <Bot className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Select a Chatbot</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">
+              <h3 className="text-lg font-semibold space-mono-regular">Select a Chatbot</h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-4 fira-mono-regular">
                 Choose a chatbot to start chatting.
               </p>
               <Select value="" onValueChange={handleSelectChatbot}>
@@ -464,7 +464,7 @@ export function PlaygroundTab() {
                     <SelectItem key={bot._id} value={bot._id}>
                       <div className="flex items-center gap-2">
                         <Bot className="h-4 w-4 text-primary" />
-                        <span>{bot.name}</span>
+                        <span className="space-mono-regular">{bot.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -480,23 +480,23 @@ export function PlaygroundTab() {
             {/* Chat header */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center border border-border">
+                <div className="h-10 w-10 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center border border-border overflow-hidden">
                   <Image
-                    src="/krira-augment-logo.png"
+                    src="/krira-augment-logo3.jpeg"
                     alt="Krira"
                     width={28}
                     height={28}
-                    className="object-contain"
+                    className="object-contain rounded-full"
                   />
                 </div>
                 <Select value={selectedChatbot._id} onValueChange={handleSelectChatbot}>
                   <SelectTrigger className="h-auto w-auto border-0 bg-transparent p-0 hover:bg-transparent focus:ring-0 shadow-none data-[placeholder]:text-foreground [&>svg]:hidden">
                     <div className="text-left">
-                      <h3 className="font-semibold flex items-center gap-2">
+                      <h3 className="font-semibold flex items-center gap-2 space-mono-regular">
                         {selectedChatbot.name}
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal fira-mono-regular">
                         <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
                           {selectedChatbot.llm?.provider}
                         </Badge>
@@ -517,7 +517,7 @@ export function PlaygroundTab() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 fira-mono-regular">
                   <span className="w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse" />
                   Active
                 </Badge>
@@ -546,18 +546,18 @@ export function PlaygroundTab() {
               {activeSession?.messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center space-y-4 max-w-md">
-                    <div className="mx-auto w-20 h-20 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center">
+                    <div className="mx-auto w-20 h-20 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center overflow-hidden">
                       <Image
-                        src="/krira-augment-logo.png"
+                        src="/krira-augment-logo3.jpeg"
                         alt="Krira"
                         width={48}
                         height={48}
-                        className="object-contain"
+                        className="object-contain rounded-full"
                       />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold">Start a Conversation</h3>
-                      <p className="text-sm text-muted-foreground mt-2">
+                      <h3 className="text-lg font-semibold space-mono-regular">Start a Conversation</h3>
+                      <p className="text-sm text-muted-foreground mt-2 fira-mono-regular">
                         Ask anything about the knowledge base that powers{" "}
                         <span className="font-medium text-foreground">
                           {selectedChatbot.name}
@@ -572,7 +572,7 @@ export function PlaygroundTab() {
                             key={suggestion}
                             variant="outline"
                             size="sm"
-                            className="text-xs"
+                            className="text-xs fira-mono-regular"
                             onClick={() => {
                               setInput(suggestion)
                               inputRef.current?.focus()
@@ -603,7 +603,7 @@ export function PlaygroundTab() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your message..."
-                  className="min-h-[52px] max-h-32 resize-none"
+                  className="min-h-[52px] max-h-32 resize-none fira-mono-regular"
                   disabled={isLoading}
                 />
                 <Button
@@ -618,7 +618,7 @@ export function PlaygroundTab() {
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
+              <p className="text-xs text-muted-foreground mt-2 text-center fira-mono-regular">
                 Responses are generated using your configured RAG pipeline
               </p>
             </div>
@@ -633,7 +633,7 @@ export function PlaygroundTab() {
           >
             {/* Sidebar Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
-              <h4 className="font-semibold text-sm">Chat History</h4>
+              <h4 className="font-semibold text-sm space-mono-regular">Chat History</h4>
               <Button
                 variant="ghost"
                 size="icon"
@@ -648,7 +648,7 @@ export function PlaygroundTab() {
             <div className="p-3 border-b">
               <Button
                 onClick={handleNewChat}
-                className="w-full gap-2"
+                className="w-full gap-2 space-mono-regular"
                 size="sm"
               >
                 <Plus className="h-4 w-4" />
@@ -680,10 +680,10 @@ export function PlaygroundTab() {
                   >
                     <MessageSquare className="h-4 w-4 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-medium truncate space-mono-regular">
                         {getSessionTitle(session)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground fira-mono-regular">
                         {session.messages.length} messages
                       </p>
                     </div>
@@ -716,18 +716,18 @@ function ChatMessageItem({ message }: ChatMessageItemProps) {
   if (message.isLoading) {
     return (
       <div className="flex gap-3 items-start">
-        <div className="h-8 w-8 shrink-0 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center">
+        <div className="h-8 w-8 shrink-0 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center overflow-hidden">
           <Image
-            src="/krira-augment-logo.png"
+            src="/krira-augment-logo3.jpeg"
             alt="Krira"
             width={20}
             height={20}
-            className="object-contain"
+            className="object-contain rounded-full"
           />
         </div>
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Assistant</span>
+            <span className="text-sm font-medium space-mono-regular">Assistant</span>
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
@@ -755,13 +755,13 @@ function ChatMessageItem({ message }: ChatMessageItemProps) {
           </AvatarFallback>
         </Avatar>
       ) : (
-        <div className="h-8 w-8 shrink-0 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center">
+        <div className="h-8 w-8 shrink-0 rounded-full bg-white dark:bg-zinc-800 border border-border flex items-center justify-center overflow-hidden">
           <Image
-            src="/krira-augment-logo.png"
+            src="/krira-augment-logo3.jpeg"
             alt="Krira"
             width={20}
             height={20}
-            className="object-contain"
+            className="object-contain rounded-full"
           />
         </div>
       )}
@@ -772,10 +772,10 @@ function ChatMessageItem({ message }: ChatMessageItemProps) {
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium space-mono-regular">
             {isUser ? "You" : "Assistant"}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground fira-mono-regular">
             {message.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",

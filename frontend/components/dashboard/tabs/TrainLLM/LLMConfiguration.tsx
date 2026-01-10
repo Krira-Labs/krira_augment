@@ -103,10 +103,10 @@ export function LLMConfiguration({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Choose LLM Provider</CardTitle>
-        <CardDescription>Connect your large language model and configure prompts.</CardDescription>
+        <CardTitle className="space-mono-regular">Choose LLM Provider</CardTitle>
+        <CardDescription className="fira-mono-regular">Connect your large language model and configure prompts.</CardDescription>
         {!isPaidPlan && (
-          <div className="text-xs font-medium text-rose-500">
+          <div className="text-xs font-medium text-rose-500 fira-mono-regular">
             Upgrade to unlock Anthropic, Perplexity, xAI, and additional managed providers.
           </div>
         )}
@@ -151,9 +151,9 @@ export function LLMConfiguration({
                   <Image src={option.logo} alt={`${option.label} logo`} width={28} height={28} className="h-7 w-7" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold leading-tight">{option.label}</p>
+                  <p className="text-xs font-semibold leading-tight space-mono-regular">{option.label}</p>
                   {disabled && (
-                    <p className="text-[10px] font-medium text-rose-500">Upgrade plan to unlock</p>
+                    <p className="text-[10px] font-medium text-rose-500 fira-mono-regular">Upgrade plan to unlock</p>
                   )}
 
                 </div>
@@ -165,8 +165,8 @@ export function LLMConfiguration({
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="border-dashed">
             <CardHeader>
-              <CardTitle className="text-base">Select a {activeProvider.label} model</CardTitle>
-              <CardDescription>Choose the AI model that will power your assistant</CardDescription>
+              <CardTitle className="text-base space-mono-regular">Select a {activeProvider.label} model</CardTitle>
+              <CardDescription className="fira-mono-regular">Choose the AI model that will power your assistant</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Select
@@ -234,7 +234,7 @@ export function LLMConfiguration({
 
               {/* Available models count */}
               {!isModelLoading && models.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground fira-mono-regular">
                   {models.length} model{models.length !== 1 ? 's' : ''} available from {activeProvider.label}
                 </p>
               )}
@@ -243,12 +243,12 @@ export function LLMConfiguration({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Chunks to Retrieve (Top K)</CardTitle>
-              <CardDescription>How many relevant chunks to fetch from your dataset (1-100)</CardDescription>
+              <CardTitle className="text-base space-mono-regular">Chunks to Retrieve (Top K)</CardTitle>
+              <CardDescription className="fira-mono-regular">How many relevant chunks to fetch from your dataset (1-100)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <Label htmlFor="chunks-to-retrieve">Top K</Label>
+                <Label htmlFor="chunks-to-retrieve" className="space-mono-regular">Top K</Label>
                 <Input
                   id="chunks-to-retrieve"
                   type="number"
@@ -263,7 +263,7 @@ export function LLMConfiguration({
 
               {/* Recommendation hints */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground">Recommended values:</p>
+                <p className="text-xs font-medium text-foreground space-mono-regular">Recommended values:</p>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -312,8 +312,8 @@ export function LLMConfiguration({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">System Prompt</CardTitle>
-            <CardDescription>Define how your assistant should behave.</CardDescription>
+            <CardTitle className="text-base space-mono-regular">System Prompt</CardTitle>
+            <CardDescription className="fira-mono-regular">Define how your assistant should behave.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-3">
@@ -346,8 +346,9 @@ export function LLMConfiguration({
               value={systemPrompt}
               onChange={(event) => setSystemPrompt(event.target.value)}
               rows={6}
+              className="fira-mono-regular"
             />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-xs text-muted-foreground fira-mono-regular">
               <span>Characters: {systemPrompt.length}</span>
               <span>Supports Markdown formatting</span>
             </div>
@@ -356,8 +357,8 @@ export function LLMConfiguration({
 
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-base">Test your model</CardTitle>
-            <CardDescription>Ask a question and inspect the response.</CardDescription>
+            <CardTitle className="text-base space-mono-regular">Test your model</CardTitle>
+            <CardDescription className="fira-mono-regular">Ask a question and inspect the response.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -366,11 +367,12 @@ export function LLMConfiguration({
                 onChange={(event) => setTestQuestion(event.target.value)}
                 placeholder="Ask a question about your knowledge base"
                 disabled={isTesting}
+                className="fira-mono-regular"
               />
               <Button
                 onClick={onAskQuestion}
                 disabled={isTesting || !model || !testQuestion.trim()}
-                className="min-w-[140px] gap-2"
+                className="min-w-[140px] gap-2 space-mono-regular"
               >
                 {isTesting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isTesting ? "Testing..." : "Ask Question"}
@@ -386,8 +388,8 @@ export function LLMConfiguration({
               <div className="grid gap-4 md:grid-cols-2">
                 <Card className="bg-muted/30">
                   <CardHeader>
-                    <CardTitle className="text-sm">Retrieved Context Summary</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-sm space-mono-regular">Retrieved Context Summary</CardTitle>
+                    <CardDescription className="fira-mono-regular">
                       {testContext.length > 0 ? (
                         <>
                           Scanned {scannedChunks} chunk{scannedChunks === 1 ? "" : "s"} • Found {relevantChunksFound} relevant • Showing top {displayedChunks.length}
@@ -436,7 +438,7 @@ export function LLMConfiguration({
                 {testResponse && (
                   <Card className="bg-muted/30">
                     <CardHeader>
-                      <CardTitle className="text-sm">AI Response</CardTitle>
+                      <CardTitle className="text-sm space-mono-regular">AI Response</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 max-h-[460px] overflow-auto pr-2" data-lenis-prevent>
                       <AiResponsePanel content={testResponse} />

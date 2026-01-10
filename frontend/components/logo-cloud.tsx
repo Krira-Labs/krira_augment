@@ -1,119 +1,29 @@
-import Image from 'next/image'
 import { InfiniteSlider } from '@/components/ui/infinite-slider'
-import { ProgressiveBlur } from '@/components/ui/progressive-blur'
+import React from 'react'
+
+const companies = [
+    'OpenAI', 'Pinecone', 'KriraLabs', 'FastRouter', 'Modal', 'Cohere', 'Mistral'
+]
 
 export default function LogoCloud() {
     return (
-        <section className="bg-background overflow-hidden py-16">
-            <div className="group relative m-auto max-w-7xl px-6">
-                <div className="flex flex-col items-center md:flex-row">
-                    <div className="md:max-w-44 md:border-r md:pr-6">
-                        <p className="text-end text-sm">Powering the best teams</p>
-                    </div>
-                    <div className="relative py-6 md:w-[calc(100%-11rem)]">
-                        <InfiniteSlider
-                            speedOnHover={20}
-                            speed={40}
-                            gap={112}>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-5 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/nvidia.svg"
-                                    alt="Nvidia Logo"
-                                    width={120}
-                                    height={20}
-                                    unoptimized
-                                />
+        <div className="mx-auto mt-20 w-full max-w-5xl border-y border-border/10 py-8">
+            <div className="flex flex-col items-center gap-6 md:flex-row md:gap-12">
+                <span className="shrink-0 text-sm font-medium text-muted-foreground md:border-r md:border-border/10 md:pr-6">
+                    Powered by best tech 
+                </span>
+                <div className="relative flex w-full flex-1 items-center overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)]">
+                    <InfiniteSlider speedOnHover={20} speed={40} gap={60}>
+                        {companies.map((name) => (
+                            <div key={name} className="flex items-center justify-center">
+                                <span className="space-mono-regular text-lg font-bold text-muted-foreground/80 transition-colors duration-300 hover:text-foreground">
+                                    {name}
+                                </span>
                             </div>
-
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-4 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/column.svg"
-                                    alt="Column Logo"
-                                    width={120}
-                                    height={16}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-4 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/github.svg"
-                                    alt="GitHub Logo"
-                                    width={120}
-                                    height={16}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-5 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/nike.svg"
-                                    alt="Nike Logo"
-                                    width={120}
-                                    height={20}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-5 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg"
-                                    alt="Lemon Squeezy Logo"
-                                    width={120}
-                                    height={20}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-4 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/laravel.svg"
-                                    alt="Laravel Logo"
-                                    width={120}
-                                    height={16}
-                                    unoptimized
-                                />
-                            </div>
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-7 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/lilly.svg"
-                                    alt="Lilly Logo"
-                                    width={160}
-                                    height={28}
-                                    unoptimized
-                                />
-                            </div>
-
-                            <div className="flex">
-                                <Image
-                                    className="mx-auto h-6 w-fit dark:invert"
-                                    src="https://html.tailus.io/blocks/customers/openai.svg"
-                                    alt="OpenAI Logo"
-                                    width={140}
-                                    height={24}
-                                    unoptimized
-                                />
-                            </div>
-                        </InfiniteSlider>
-
-                        <div className="bg-linear-to-r from-background absolute inset-y-0 left-0 w-20"></div>
-                        <div className="bg-linear-to-l from-background absolute inset-y-0 right-0 w-20"></div>
-                        <ProgressiveBlur
-                            className="pointer-events-none absolute left-0 top-0 h-full w-20"
-                            direction="left"
-                            blurIntensity={1}
-                        />
-                        <ProgressiveBlur
-                            className="pointer-events-none absolute right-0 top-0 h-full w-20"
-                            direction="right"
-                            blurIntensity={1}
-                        />
-                    </div>
+                        ))}
+                    </InfiniteSlider>
                 </div>
             </div>
-        </section>
+        </div>
     )
 }

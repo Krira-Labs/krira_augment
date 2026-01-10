@@ -32,7 +32,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { TrainLLMTab } from "./tabs/train-llm"
 import { PlaygroundTab } from "./tabs/playground"
 import { UsageAnalyticsTab } from "./tabs/usage-analytics"
-import { PreviousChatbotsTab } from "./tabs/previous-chatbots"
+import { PreviousPipelinesTab } from "./tabs/previous-chatbots"
 import { ApiKeysTab } from "./tabs/api-keys"
 import { PricingTab } from "./tabs/pricing"
 import { AccountProfileTab } from "./tabs/account-profile"
@@ -49,6 +49,12 @@ type DashboardTab = {
 
 const DASHBOARD_TABS: DashboardTab[] = [
   {
+    value: "usage-analytics",
+    label: "Usage & Analytics",
+    description: "Monitor performance metrics and usage trends",
+    component: <UsageAnalyticsTab />,
+  },
+  {
     value: "train-llm",
     label: "RAG Pipeline",
     description: "Create Complete RAG pipelines with ease",
@@ -61,16 +67,10 @@ const DASHBOARD_TABS: DashboardTab[] = [
     component: <PlaygroundTab />,
   },
   {
-    value: "usage-analytics",
-    label: "Usage & Analytics",
-    description: "Monitor performance metrics and usage trends",
-    component: <UsageAnalyticsTab />,
-  },
-  {
     value: "previous-chatbots",
-    label: "Previous Chatbots",
-    description: "Review and manage your existing assistants",
-    component: <PreviousChatbotsTab />,
+    label: "Deployments",
+    description: "Review and manage your existing RAG pipelines",
+    component: <PreviousPipelinesTab />,
   },
   {
     value: "api-keys",
@@ -133,7 +133,7 @@ function formatRole(role?: string) {
 export default function DashboardLayout() {
   const { user, logout, refreshUser, isLoading: isAuthLoading } = useAuth()
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = React.useState<string>(DASHBOARD_TABS[0].value)
+  const [activeTab, setActiveTab] = React.useState<string>("usage-analytics")
   const [isLoggingOut, setIsLoggingOut] = React.useState(false)
   const openProfileTab = React.useCallback(() => setActiveTab("account-profile"), [setActiveTab])
   const openBillingTab = React.useCallback(() => setActiveTab("account-billing"), [setActiveTab])
@@ -296,16 +296,16 @@ function DashboardHeader({
           <SidebarTrigger className="hidden md:inline-flex h-8 w-8 rounded-lg hover:bg-muted hover:text-foreground transition-colors [&_svg]:text-muted-foreground [&_svg]:hover:text-foreground" />
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-semibold text-foreground">{activeLabel}</span>
+              <span className="font-semibold text-foreground space-mono-regular">{activeLabel}</span>
             </div>
             <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground/50" />
-            <p className="hidden md:block text-sm text-muted-foreground max-w-md truncate">
+            <p className="hidden md:block text-sm text-muted-foreground max-w-md truncate fira-mono-regular">
               {activeDescription}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Badge 
+          <Badge
             className={cn(
               "hidden sm:inline-flex gap-1.5 px-3 py-1 rounded-full transition-colors",
               "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
@@ -320,13 +320,13 @@ function DashboardHeader({
             ) : (
               <>
                 <Sparkles className="h-3 w-3" />
-                <span className="text-xs font-semibold">{planLabel}</span>
+                <span className="text-xs font-semibold fira-mono-regular">{planLabel}</span>
               </>
             )}
           </Badge>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="relative h-9 w-9 rounded-full hover:bg-muted hover:text-foreground transition-colors text-muted-foreground"
           >
             <BellIcon className="h-4 w-4" />
@@ -346,7 +346,7 @@ function DashboardHeader({
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:flex flex-col items-start">
-                  <span className="text-sm font-medium leading-tight text-foreground">{displayName}</span>
+                  <span className="text-sm font-medium leading-tight text-foreground space-mono-regular">{displayName}</span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -359,21 +359,21 @@ function DashboardHeader({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-semibold truncate">{displayName}</span>
+                  <span className="text-sm font-semibold truncate space-mono-regular">{displayName}</span>
                   {(displayEmail || displayRole) && (
-                    <span className="text-xs text-muted-foreground truncate">{displayEmail || displayRole}</span>
+                    <span className="text-xs text-muted-foreground truncate fira-mono-regular">{displayEmail || displayRole}</span>
                   )}
                 </div>
               </div>
-              <DropdownMenuItem onSelect={onOpenProfile} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+              <DropdownMenuItem onSelect={onOpenProfile} className="gap-2 py-2.5 rounded-lg cursor-pointer space-mono-regular">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenBilling} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+              <DropdownMenuItem onSelect={onOpenBilling} className="gap-2 py-2.5 rounded-lg cursor-pointer space-mono-regular">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <span>Billing</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenSettings} className="gap-2 py-2.5 rounded-lg cursor-pointer">
+              <DropdownMenuItem onSelect={onOpenSettings} className="gap-2 py-2.5 rounded-lg cursor-pointer space-mono-regular">
                 <Settings className="h-4 w-4 text-muted-foreground" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -393,7 +393,7 @@ function DashboardHeader({
                 ) : (
                   <LogOut className="h-4 w-4" />
                 )}
-                <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
+                <span className="space-mono-regular">{isLoggingOut ? "Signing out..." : "Sign out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

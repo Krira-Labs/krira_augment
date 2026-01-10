@@ -27,12 +27,12 @@ export function CreateChatbotStep({
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-10">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">
-          {isEditMode 
-            ? `Continue with "${chatbotNameInput}"` 
+        <h2 className="text-2xl font-bold tracking-tight space-mono-regular">
+          {isEditMode
+            ? `Continue with "${chatbotNameInput}"`
             : "Name your Chatbot"}
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground fira-mono-regular">
           {isEditMode
             ? "Continue configuring your AI assistant pipeline."
             : "Give your AI assistant a unique identity to get started."}
@@ -42,7 +42,7 @@ export function CreateChatbotStep({
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="chatbot-name">Chatbot Name</Label>
+              <Label htmlFor="chatbot-name" className="space-mono-regular">Chatbot Name</Label>
               <Input
                 id="chatbot-name"
                 placeholder="e.g. Support Assistant, Sales Bot..."
@@ -53,10 +53,11 @@ export function CreateChatbotStep({
                     handleCreateChatbot()
                   }
                 }}
+                className="fira-mono-regular"
               />
             </div>
             <Button
-              className="w-full"
+              className="w-full space-mono-regular"
               onClick={handleCreateChatbot}
               disabled={isCreatingChatbot || !chatbotNameInput.trim()}
             >
