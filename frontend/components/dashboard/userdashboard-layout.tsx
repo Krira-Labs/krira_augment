@@ -340,7 +340,7 @@ function DashboardHeader({
                 className="flex h-9 items-center gap-2.5 rounded-full px-2 pr-3 transition-all hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:ring-1 data-[state=open]:ring-border"
               >
                 <Avatar className="h-7 w-7 ring-2 ring-primary/20">
-                  <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} />
+                  {/* <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} /> */}
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
@@ -353,7 +353,7 @@ function DashboardHeader({
             <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl" sideOffset={8}>
               <div className="flex items-center gap-3 px-2 py-3 rounded-lg bg-muted/50 mb-2">
                 <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                  <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} />
+                  {/* <AvatarImage src="/images/avatar.png" alt={`${displayName} avatar`} /> */}
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
                     {initials}
                   </AvatarFallback>
@@ -399,6 +399,6 @@ function DashboardHeader({
           </DropdownMenu>
         </div>
       </div>
-    </header>
+    </header >
   )
 }
