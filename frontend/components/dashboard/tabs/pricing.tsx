@@ -59,7 +59,7 @@ const FALLBACK_PLANS: PlanCard[] = [
     providers: ["OpenAI", "Google", "DeepSeek"],
     vectorStores: ["Chroma"],
     embeddingModels: ["OpenAI Mini", "HuggingFace Base"],
-    features: ["100 monthly requests", "50 MB total storage pool"],
+    features: ["Unlimited pipelines", "100 monthly requests", "50 MB total storage pool"],
   },
   {
     id: "startup_monthly",
@@ -78,7 +78,7 @@ const FALLBACK_PLANS: PlanCard[] = [
     providers: ["OpenAI", "Anthropic", "Google", "Perplexity"],
     vectorStores: ["Chroma", "Pinecone"],
     embeddingModels: ["OpenAI Pro", "HuggingFace Base"],
-    features: ["5,000 monthly requests", "5 GB total storage pool"],
+    features: ["Unlimited pipelines", "5,000 monthly requests", "5 GB total storage pool"],
     highlight: true,
   },
   {
@@ -98,7 +98,7 @@ const FALLBACK_PLANS: PlanCard[] = [
     providers: ["OpenAI", "Anthropic", "Google", "Perplexity", "DeepSeek"],
     vectorStores: ["Chroma", "Pinecone", "Weaviate"],
     embeddingModels: ["OpenAI Pro/Ultra", "HuggingFace Large"],
-    features: ["15,000 monthly requests", "20 GB total storage pool"],
+    features: ["Unlimited pipelines", "15,000 monthly requests", "20 GB total storage pool"],
   },
 ]
 
