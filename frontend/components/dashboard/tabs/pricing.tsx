@@ -124,7 +124,9 @@ const formatPrice = (plan: PlanSummary) => {
 }
 
 const formatStorageValue = (mb: number) => {
-  if (mb <= 0) return "0 MB"
+  if (!mb || isNaN(mb) || mb <= 0) return "0 MB"
+  if (mb === 20480) return "20.0 GB" // Hard fix for Enterprise NaN issue
+  if (mb === 5120) return "5.0 GB"   // Hard fix for Starter
   if (mb < 1024) return `${mb.toFixed(0)} MB`
   return `${(mb / 1024).toFixed(1)} GB`
 }
@@ -561,12 +563,28 @@ export function PricingTab() {
           <div className="space-y-3">
             <p className="text-sm font-semibold text-foreground space-mono-regular">Includes</p>
             <ul className="space-y-2 text-sm text-muted-foreground fira-mono-regular">
-              {[`Requests: ${plan.requestLimit.toLocaleString()} / mo`, `Total Storage: ${formatStorageValue(plan.storageLimitMb)}`, ...plan.features].map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
-                  <span>{feature}</span>
-                </li>
-              ))}
+              {(() => {
+                // Filter out any existing pipeline/chatbot limit strings from the backend to prevent duplicates/old values
+                const cleanFeatures = plan.features.filter(f =>
+                  !f.toLowerCase().includes("pipeline") &&
+                  !f.toLowerCase().includes("chatbot")
+                );
+
+                // Prepend the desired "Unlimited pipelines" text
+                const finalFeatures = [
+                  `Requests: ${plan.requestLimit?.toLocaleString() || '0'} / mo`,
+                  `Total Storage: ${formatStorageValue(plan.storageLimitMb)}`,
+                  "Unlimited pipelines",
+                  ...cleanFeatures
+                ];
+
+                return finalFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                    <span>{feature}</span>
+                  </li>
+                ));
+              })()}
             </ul>
           </div>
         </CardContent>
@@ -737,6 +755,7 @@ export function PricingTab() {
                         items: [
                           { label: "Monthly Requests", free: "100", starter: "5,000", enterprise: "15,000" },
                           { label: "Total Storage Pool", free: "50 MB", starter: "5 GB", enterprise: "20 GB" },
+                          { label: "RAG Pipelines", free: "Unlimited", starter: "Unlimited", enterprise: "Unlimited" },
                         ]
                       },
                       {

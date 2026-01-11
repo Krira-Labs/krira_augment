@@ -104,7 +104,8 @@ class ApiClient {
     endpoint: string,
     options: RequestConfig = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = `${this.baseURL}${endpoint}${separator}t=${Date.now()}`;
     const accessToken = this.getAccessToken();
 
     const headers: Record<string, string> = {
@@ -124,6 +125,7 @@ class ApiClient {
       ...options,
       headers,
       credentials: 'include', // Include cookies
+      cache: 'no-store', // Prevent browser caching
     };
 
     try {
