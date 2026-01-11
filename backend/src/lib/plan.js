@@ -1,4 +1,4 @@
-import MODEL_ACCESS from "./model-access.json" with { type: "json" };
+import MODEL_ACCESS from "./model-access.json" with { type: "json" }; // force-backend-redeploy-v2
 
 const NORMALIZED_MODEL_ACCESS = Object.entries(MODEL_ACCESS).reduce((acc, [provider, details]) => {
   const free = Array.isArray(details.freeModels) ? details.freeModels.map((id) => id.toLowerCase()) : [];
