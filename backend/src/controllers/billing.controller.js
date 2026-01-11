@@ -53,6 +53,7 @@ export const getBillingPlans = async (req, res) => {
       comingSoon: Boolean(currentPlan.comingSoon),
     },
     userPlanId: req.user?.plan ?? "free",
+    version: "v1.1.2",
   });
 };
 

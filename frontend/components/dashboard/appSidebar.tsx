@@ -78,13 +78,13 @@ const NAVIGATION_ITEMS: SidebarItem[] = [
   },
   {
     value: "api-keys",
-    label: "API Keys",
+    label: "Keys & Access",
     icon: KeyIcon,
     description: "Access credentials",
   },
   {
     value: "pricing",
-    label: "Pricing",
+    label: "Billing & Plans",
     icon: CreditCard,
     description: "Plan comparison",
   },
