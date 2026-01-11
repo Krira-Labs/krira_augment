@@ -564,7 +564,7 @@ export function ApiKeysTab() {
             </Button>
             <Button
               onClick={handleKeyCreation}
-              disabled={!keyName || !selectedBot || isSubmitting}
+              disabled={!keyName || !selectedPipeline || isSubmitting}
               className="flex-1 sm:flex-none px-8 shadow-sm shadow-primary/20"
             >
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
